@@ -3,45 +3,47 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function signedIn() { return request.auth != null; }
+
     function isMember(roomId) {
       return signedIn() &&
         exists(/databases/$(database)/documents/rooms/$(roomId)/members/$(request.auth.uid));
     }
+
     function isOwner(roomId) {
       return signedIn() &&
-        get(/databases/$(database)/documents/rooms/$(roomId)).data.ownerId == request.auth.uid;
+        get(/databases/$(database)/documents/rooms/$(roomId)).data.createdBy == request.auth.uid;
     }
 
-    // 본인 user 문서만
-    match /users/{uid} {
+    // 코드 해시 → 방 역인덱스. 입장 전에 읽어야 하므로 로그인만 요구.
+    match /roomCodes/{codeHash} {
       allow read: if signedIn();
-      allow write: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if false;
+      allow delete: if signedIn() &&
+        get(/databases/$(database)/documents/rooms/$(resource.data.roomId)).data.createdBy == request.auth.uid;
     }
 
-    // 코드→방 역인덱스: 로그인 시 읽기(참여용), 생성은 로그인
-    match /inviteCodes/{code} {
-      allow read: if signedIn();
-      allow create: if signedIn();
-      allow delete: if signedIn(); // 방 삭제 시 owner가 정리
+    // 입장 코드 평문 + 비밀번호 해시. 방 생성자만 접근.
+    match /roomSecrets/{roomId} {
+      allow read: if isOwner(roomId);
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if false;
+      allow delete: if isOwner(roomId);
     }
 
     match /rooms/{roomId} {
-      allow read: if isMember(roomId);
-      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if isOwner(roomId);
+      // 입장 트랜잭션이 가입 전에 방 문서를 읽으므로 signedIn 허용
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isOwner(roomId);
+      allow delete: if isOwner(roomId);
 
-      // 멤버: 본인 가입/탈퇴, owner는 강퇴 가능
+      // 멤버 문서 안에 schedules 맵이 들어있음
       match /members/{uid} {
         allow read: if isMember(roomId);
         allow create: if signedIn() && request.auth.uid == uid;
-        allow delete: if request.auth.uid == uid || isOwner(roomId);
         allow update: if request.auth.uid == uid || isOwner(roomId);
-      }
-
-      // 시간표: 본인 문서만 쓰기, 멤버는 읽기
-      match /schedules/{uid} {
-        allow read: if isMember(roomId);
-        allow write: if signedIn() && request.auth.uid == uid;
+        allow delete: if request.auth.uid == uid || isOwner(roomId);
       }
     }
   }
