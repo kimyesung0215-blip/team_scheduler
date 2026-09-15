@@ -12,9 +12,12 @@
   --text:#14171f; --text-2:#6b7280; --text-3:#a5abb6;
   --line:#e8ebf1; --line-2:#f1f3f7;
   --accent:#2f6df6; --accent-soft:#e8efff; --accent-text:#ffffff;
-  --danger:#e5484d;
+  --danger:#e5484d; --danger-soft:#fdeaea;
+  --ok:47,109,246; --no:229,72,77;
   --grid-line:#eef0f5; --grid-hour:#e3e6ed;
   --heat:47,109,246; --heat-max:.68;
+  --blocked:#9aa1ad;
+  --tl-dawn:#f3f5fa; --tl-day:#fdf9ef; --tl-evening:#f7f1fa; --tl-night:#eceef6;
   --shadow:0 1px 3px rgba(20,23,31,.07);
 }
 :root[data-theme="dark"]{
@@ -22,9 +25,12 @@
   --text:#eef1f6; --text-2:#8f97a6; --text-3:#5e6676;
   --line:#242a36; --line-2:#1c212b;
   --accent:#4d86ff; --accent-soft:#1a2740; --accent-text:#ffffff;
-  --danger:#ff6b6b;
+  --danger:#ff6b6b; --danger-soft:#3a1d22;
+  --ok:120,160,255; --no:255,107,107;
   --grid-line:#1d222d; --grid-hour:#262c39;
   --heat:120,160,255; --heat-max:.72;
+  --blocked:#4a5162;
+  --tl-dawn:#131826; --tl-day:#1b1e17; --tl-evening:#1e1826; --tl-night:#10131f;
   --shadow:0 1px 3px rgba(0,0,0,.3);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -73,8 +79,9 @@ button:disabled{cursor:not-allowed;opacity:.35}
 /* ===== 앱 ===== */
 .app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
 .topbar{padding:14px 16px 10px;flex-shrink:0}
-.topbar-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.topbar h1{font-size:20px;font-weight:800;letter-spacing:-.4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar-row{display:flex;align-items:center;gap:9px}
+.back-btn{width:32px;height:32px;border-radius:50%;background:var(--surface);color:var(--text-2);font-size:17px;line-height:1;flex-shrink:0;box-shadow:var(--shadow)}
+.topbar h1{flex:1;min-width:0;font-size:19px;font-weight:800;letter-spacing:-.4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .owner-tag{display:inline-block;background:var(--accent-soft);color:var(--accent);font-size:9px;font-weight:700;padding:3px 7px;border-radius:5px;margin-left:6px;vertical-align:2px}
 .week-pick{display:flex;align-items:center;gap:2px;background:var(--surface);border-radius:999px;padding:5px 6px;flex-shrink:0;box-shadow:var(--shadow)}
 .week-nav{width:26px;height:26px;border-radius:50%;font-size:15px;color:var(--text-2);line-height:1}
@@ -85,17 +92,29 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .seg-btn{flex:1;padding:8px 0;font-size:13px;font-weight:600;color:var(--text-2);border-radius:9px;transition:all .18s}
 .seg-btn.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 
+/* 도구 툴바 */
+.toolbar{display:flex;gap:6px;margin:8px 16px 0;flex-shrink:0}
+.tool{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0 6px;border-radius:11px;background:var(--surface);color:var(--text-2);font-size:10px;font-weight:600;border:1.5px solid transparent;box-shadow:var(--shadow);transition:all .15s}
+.tool svg{width:17px;height:17px}
+.tool.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.tool.on.t-no{border-color:var(--danger);color:var(--danger);background:var(--danger-soft)}
+
 .view{flex:1;overflow-y:auto;min-height:0}
 .view-pad{padding:14px 16px 24px;display:flex;flex-direction:column;gap:18px}
 
 /* 그리드 */
-.grid-wrap{flex:1;overflow:auto;min-height:0;background:var(--surface);margin:12px 12px 0;border-radius:16px 16px 0 0}
+.grid-wrap{flex:1;overflow:auto;min-height:0;background:var(--surface);margin:10px 12px 0;border-radius:16px 16px 0 0}
 .grid{display:grid;grid-template-columns:2.1rem repeat(7,minmax(1.5rem,1fr))}
 .dh{background:var(--surface);position:sticky;top:0;z-index:10;text-align:center;font-size:11px;color:var(--text-2);padding:9px 0 7px;font-weight:600;border-bottom:1px solid var(--line-2)}
-.tl{font-size:8.5px;color:var(--text-3);text-align:right;padding-right:4px;line-height:20px;font-variant-numeric:tabular-nums}
+.tl{font-size:8.5px;color:var(--text-2);text-align:right;padding-right:4px;line-height:20px;font-variant-numeric:tabular-nums}
+.tl.dawn{background:var(--tl-dawn)}
+.tl.day{background:var(--tl-day)}
+.tl.evening{background:var(--tl-evening)}
+.tl.night{background:var(--tl-night)}
 .cell{height:20px;position:relative;border-bottom:.5px solid var(--grid-line);border-left:.5px solid var(--grid-line)}
 .cell.hourline{border-bottom:.5px solid var(--grid-hour)}
-.cell.editable{cursor:pointer;touch-action:none}
+.cell.daypart,.tl.boundary{border-top:1.5px solid var(--grid-hour)}
+.grid.drawing .cell{cursor:pointer;touch-action:none}
 .badge{position:absolute;bottom:1px;right:2px;font-size:7.5px;font-weight:900;z-index:5;line-height:1;color:var(--text)}
 
 /* 리스트 */
@@ -143,7 +162,7 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .mini-day{font-size:8px;color:var(--text-3);text-align:center;margin-bottom:3px}
 .mini-cell{height:3px;border-radius:1px;background:var(--surface-2)}
 </style>
-  <script type="module" crossorigin src="/team_scheduler/assets/index-CcY0rkwI.js"></script>
+  <script type="module" crossorigin src="/team_scheduler/assets/index-zKZ8WCti.js"></script>
 <link rel="manifest" href="/team_scheduler/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/team_scheduler/registerSW.js"></script></head>
 <body>
 <div class="shell">
@@ -203,6 +222,7 @@ button:disabled{cursor:not-allowed;opacity:.35}
   <section class="app hidden" id="app">
     <div class="topbar">
       <div class="topbar-row">
+        <button class="back-btn" id="back-btn" type="button" aria-label="첫 화면으로">←</button>
         <h1 id="room-title-label">팀 스케줄러</h1>
         <div class="week-pick" id="week-pick">
           <button class="week-nav" id="prev-week" type="button">‹</button>
@@ -215,6 +235,25 @@ button:disabled{cursor:not-allowed;opacity:.35}
     <div class="seg" id="seg">
       <button class="seg-btn on" id="mt-edit" type="button">내 시간표</button>
       <button class="seg-btn" id="mt-overview" type="button">종합 보기</button>
+    </div>
+
+    <div class="toolbar" id="toolbar">
+      <button class="tool on" id="tool-move" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3"/></svg>
+        이동
+      </button>
+      <button class="tool" id="tool-ok" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        가능
+      </button>
+      <button class="tool t-no" id="tool-no" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        불가
+      </button>
+      <button class="tool" id="tool-erase" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H8.5l-5-5a2 2 0 0 1 0-2.8l8.3-8.3a2 2 0 0 1 2.8 0l5.7 5.7a2 2 0 0 1 0 2.8L15 18"/><path d="M7 11l6 6"/></svg>
+        지우개
+      </button>
     </div>
 
     <div class="grid-wrap" id="view-grid">
