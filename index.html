@@ -67,7 +67,7 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .room-card-title{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .room-card-meta{font-size:11px;color:var(--text-2);margin-top:3px;font-variant-numeric:tabular-nums}
 .chip{background:var(--accent);color:var(--accent-text);border-radius:999px;padding:7px 15px;font-size:12px;font-weight:600;flex-shrink:0}
-.stack{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.stack{display:flex;flex-direction:column;gap:8px}
 
 /* ===== 앱 ===== */
 .app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -166,9 +166,18 @@ button:disabled{cursor:not-allowed;opacity:.35}
           <input class="input code-input" id="join-code" inputmode="numeric" maxlength="6" placeholder="000000">
           <input class="input" id="join-name" maxlength="24" placeholder="내 이름">
           <button class="btn" id="join-btn" type="button">입장</button>
-          <button class="btn-sub hidden" id="resume-btn" type="button">최근 방 다시 열기</button>
         </div>
       </div>
+    </div>
+
+    <div class="hidden" id="recent-section">
+      <div class="sec-label">최근 들어간 방</div>
+      <div class="stack" id="recent-list"></div>
+    </div>
+
+    <div class="hidden" id="my-rooms-section">
+      <div class="sec-label">내가 만든 방</div>
+      <div class="stack" id="admin-room-list"></div>
     </div>
 
     <div style="display:flex;justify-content:center;margin-top:2px">
@@ -180,12 +189,11 @@ button:disabled{cursor:not-allowed;opacity:.35}
       <div class="card">
         <div class="form">
           <input class="input" id="room-title" maxlength="40" placeholder="방 이름">
+          <input class="input" id="owner-name" maxlength="24" placeholder="내 이름 (방장)">
           <input class="input" id="room-password" type="password" minlength="4" placeholder="관리 비밀번호 (4자 이상)">
           <button class="btn" id="create-room-btn" type="button">방 생성</button>
         </div>
-        <div class="notice ok hidden" id="created-room" style="margin-top:10px"></div>
       </div>
-      <div class="stack" id="admin-room-list"></div>
     </div>
   </section>
 
@@ -296,6 +304,7 @@ const SESSION_KEY='ts:last-room';
 const CREATE_KEY='ts:create-open';
 const THEME_KEY='ts:theme';
 const ADMIN_ROOMS_KEY='ts:admin-rooms';
+const VISITED_KEY='ts:visited-rooms';
 const SAVE_DELAY=350;
 
 const $=id=>document.getElementById(id);
@@ -303,9 +312,10 @@ const el={
   gate:$('gate'),app:$('app'),
   authStatus:$('auth-status'),configWarning:$('config-warning'),statusBox:$('status-box'),
   adminToggle:$('admin-toggle'),adminPanel:$('admin-panel'),gateThemeBtn:$('gate-theme-btn'),
-  joinCode:$('join-code'),joinName:$('join-name'),joinBtn:$('join-btn'),resumeBtn:$('resume-btn'),
-  roomTitle:$('room-title'),roomPassword:$('room-password'),createRoomBtn:$('create-room-btn'),
-  createdRoom:$('created-room'),adminRoomList:$('admin-room-list'),
+  joinCode:$('join-code'),joinName:$('join-name'),joinBtn:$('join-btn'),
+  roomTitle:$('room-title'),ownerName:$('owner-name'),roomPassword:$('room-password'),createRoomBtn:$('create-room-btn'),
+  adminRoomList:$('admin-room-list'),myRoomsSection:$('my-rooms-section'),
+  recentSection:$('recent-section'),recentList:$('recent-list'),
   roomTitleLabel:$('room-title-label'),weekLabelText:$('week-label-text'),weekPick:$('week-pick'),
   prevWeek:$('prev-week'),nextWeek:$('next-week'),
   seg:$('seg'),mtEdit:$('mt-edit'),mtOverview:$('mt-overview'),
@@ -319,7 +329,7 @@ const el={
 
 const SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.2v2M12 19.8v2M2.2 12h2M19.8 12h2M5.1 5.1l1.4 1.4M17.5 17.5l1.4 1.4M18.9 5.1l-1.4 1.4M6.5 17.5l-1.4 1.4"/></svg>';
 const MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a6.9 6.9 0 0 0 10.8 10.8z"/></svg>';
-const AUTO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18" fill="currentColor" stroke="none" opacity=".35"/></svg>';
+const AUTO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 3a9 9 0 0 1 0 18" fill="currentColor" stroke="none" opacity=".35"/></svg>';
 
 let fbApp=null,auth=null,db=null,user=null;
 let room=null,people=[],curWeek=0,mode='edit',tab='grid';
@@ -337,7 +347,7 @@ function init(){
   applyTheme();
   bindEvents();
   setCreateUI(createOpen);
-  renderAdminRooms();
+  renderGateLists();
   if(!HAS_CFG){
     el.configWarning.classList.remove('hidden');
     el.configWarning.textContent='SCHEDULER_FIREBASE_CONFIG에 Firebase 설정 6개 값을 넣어주세요.';
@@ -355,10 +365,7 @@ function init(){
     user=u;
     el.authStatus.textContent=user?`준비됨 · ${shortId(user.uid)}`:'로그인 대기 중';
     setControlsEnabled(Boolean(user));
-    if(user&&getSavedSession()){
-      el.resumeBtn.classList.remove('hidden');
-      await resumeLastRoom();
-    }
+    if(user&&getSavedSession())await resumeLastRoom();
   });
 }
 
@@ -387,7 +394,6 @@ function bindEvents(){
   el.gateThemeBtn.addEventListener('click',cycleTheme);
   el.adminToggle.addEventListener('click',()=>setCreateUI(!createOpen));
   el.joinBtn.addEventListener('click',joinRoom);
-  el.resumeBtn.addEventListener('click',resumeLastRoom);
   el.createRoomBtn.addEventListener('click',createRoom);
   el.prevWeek.addEventListener('click',()=>gotoWeek(curWeek-1));
   el.nextWeek.addEventListener('click',()=>gotoWeek(curWeek+1));
@@ -432,16 +438,16 @@ function setCreateUI(on){
   el.adminToggle.className=`pill${on?' on':''}`;
   el.adminToggle.textContent=on?'닫기':'방 만들기';
   el.adminPanel.classList.toggle('hidden',!on);
-  renderAdminRooms();
 }
 
 function setControlsEnabled(on){
-  [el.joinBtn,el.resumeBtn,el.createRoomBtn].forEach(b=>b.disabled=!on);
+  [el.joinBtn,el.createRoomBtn].forEach(b=>b.disabled=!on);
 }
 
 async function createRoom(){
   if(!requireFB())return;
   const title=norm(el.roomTitle.value,40)||'새 방';
+  const ownerName=norm(el.ownerName.value,24)||'방장';
   const pw=el.roomPassword.value.trim();
   if(pw.length<4){setStatus('비밀번호는 4자 이상이어야 해요.',true);return;}
   try{
@@ -454,13 +460,14 @@ async function createRoom(){
     batch.set(roomRef,{title,createdBy:user.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp(),weekLabels:DEFAULT_WEEKS});
     batch.set(doc(db,'roomCodes',codeHash),{roomId:roomRef.id,createdBy:user.uid,createdAt:serverTimestamp()});
     batch.set(doc(db,'roomSecrets',roomRef.id),{roomId:roomRef.id,entryCode:code,codeHash,passwordHash:pwHash,createdBy:user.uid,createdAt:serverTimestamp()});
+    batch.set(doc(db,'rooms',roomRef.id,'members',user.uid),{uid:user.uid,name:ownerName,ci:ciForUid(user.uid),schedules:{},joinedAt:serverTimestamp(),updatedAt:serverTimestamp()});
     await batch.commit();
     rememberAdminRoom({roomId:roomRef.id,title,entryCode:code});
-    renderAdminRooms();
-    el.createdRoom.classList.remove('hidden');
-    el.createdRoom.textContent=`방을 만들었어요\n입장 번호: ${code}\n\n이 번호를 팀원에게 알려주세요.`;
     el.roomPassword.value='';
     setStatus('');
+    window.alert(`방을 만들었어요\n\n입장 번호: ${code}\n\n이 번호를 팀원에게 알려주세요.\n(설정 탭에서 다시 볼 수 있어요)`);
+    saveSession(roomRef.id);
+    enterRoom(roomRef.id);
   }catch(e){setStatus(fmtErr(e),true);}
   finally{el.createRoomBtn.disabled=false;}
 }
@@ -507,7 +514,7 @@ async function resumeLastRoom(){
   if(!roomId)return;
   try{
     const snap=await getDoc(doc(db,'rooms',roomId,'members',user.uid));
-    if(!snap.exists()){clearSession();el.resumeBtn.classList.add('hidden');return;}
+    if(!snap.exists()){clearSession();return;}
     enterRoom(roomId);
   }catch(e){setStatus(fmtErr(e),true);}
 }
@@ -527,6 +534,7 @@ function enterRoom(roomId){
     room={id:snap.id,title:d.title||'팀 스케줄러',createdBy:d.createdBy,
       weekLabels:Array.isArray(d.weekLabels)&&d.weekLabels.length?d.weekLabels:DEFAULT_WEEKS};
     if(curWeek>=room.weekLabels.length)curWeek=room.weekLabels.length-1;
+    rememberVisited(room.id,room.title);
     render();
     if(tab==='settings')renderSettings();
     if(el.overlay.classList.contains('show'))renderPopup();
@@ -550,7 +558,7 @@ function leaveRoom(clear=true){
   closePopup();
   el.app.classList.add('hidden');
   el.gate.classList.remove('hidden');
-  el.resumeBtn.classList.toggle('hidden',!getSavedSession());
+  renderGateLists();
 }
 
 function closeWatchers(){
@@ -655,6 +663,9 @@ async function renameRoom(){
   if(!title)return;
   try{
     await updateDoc(doc(db,'rooms',room.id),{title,updatedAt:serverTimestamp()});
+    const list=getAdminRooms();
+    const hit=list.find(x=>x.roomId===room.id);
+    if(hit){hit.title=title;localStorage.setItem(ADMIN_ROOMS_KEY,JSON.stringify(list));}
   }catch(e){window.alert(fmtErr(e));}
 }
 
@@ -705,7 +716,7 @@ async function deleteCurrentRoom(){
     batch.delete(doc(db,'rooms',room.id));
     await batch.commit();
     forgetAdminRoom(room.id);
-    renderAdminRooms();
+    forgetVisited(room.id);
     leaveRoom(true);
   }catch(e){window.alert(fmtErr(e));}
 }
@@ -717,7 +728,6 @@ function renderSettings(){
   const owner=isOwner();
   el.settingsBody.innerHTML='';
 
-  /* 화면 */
   const themeBox=document.createElement('div');themeBox.className='rows';
   const tr=document.createElement('div');tr.className='theme-row';
   [['light','라이트',SUN],['dark','다크',MOON],['auto','시스템',AUTO]].forEach(([key,label,icon])=>{
@@ -976,14 +986,37 @@ function forgetAdminRoom(id){
 }
 function getAdminRooms(){try{return JSON.parse(localStorage.getItem(ADMIN_ROOMS_KEY)||'[]');}catch{return[];}}
 
-function renderAdminRooms(){
+function rememberVisited(roomId,title){
+  const list=getVisited().filter(x=>x.roomId!==roomId);
+  list.unshift({roomId,title});
+  localStorage.setItem(VISITED_KEY,JSON.stringify(list.slice(0,10)));
+}
+function forgetVisited(id){
+  localStorage.setItem(VISITED_KEY,JSON.stringify(getVisited().filter(x=>x.roomId!==id)));
+}
+function getVisited(){try{return JSON.parse(localStorage.getItem(VISITED_KEY)||'[]');}catch{return[];}}
+
+function renderGateLists(){
+  /* 최근 들어간 방 */
+  const visited=getVisited();
+  el.recentList.innerHTML='';
+  el.recentSection.classList.toggle('hidden',!visited.length);
+  visited.forEach(r=>{
+    const card=document.createElement('div');card.className='card';card.style.padding='0';
+    const inner=document.createElement('div');inner.className='room-card';
+    inner.innerHTML=`<div><div class="room-card-title">${esc(r.title||'방')}</div></div>`;
+    const btn=document.createElement('button');btn.type='button';btn.className='chip';btn.textContent='입장';
+    btn.addEventListener('click',()=>{saveSession(r.roomId);enterRoom(r.roomId);});
+    inner.appendChild(btn);
+    card.appendChild(inner);
+    el.recentList.appendChild(card);
+  });
+
+  /* 내가 만든 방 */
+  const mine=getAdminRooms();
   el.adminRoomList.innerHTML='';
-  if(!createOpen)return;
-  const list=getAdminRooms();
-  if(!list.length)return;
-  const l=document.createElement('div');l.className='sec-label';l.textContent='내가 만든 방';
-  el.adminRoomList.appendChild(l);
-  list.forEach(r=>{
+  el.myRoomsSection.classList.toggle('hidden',!mine.length);
+  mine.forEach(r=>{
     const card=document.createElement('div');card.className='card';card.style.padding='0';
     const inner=document.createElement('div');inner.className='room-card';
     inner.innerHTML=`<div><div class="room-card-title">${esc(r.title||'방')}</div><div class="room-card-meta">입장 번호 ${esc(r.entryCode)}</div></div>`;
@@ -995,7 +1028,7 @@ function renderAdminRooms(){
   });
 }
 
-function saveSession(id){localStorage.setItem(SESSION_KEY,id);el.resumeBtn.classList.remove('hidden');}
+function saveSession(id){localStorage.setItem(SESSION_KEY,id);}
 function getSavedSession(){return localStorage.getItem(SESSION_KEY);}
 function clearSession(){localStorage.removeItem(SESSION_KEY);}
 
