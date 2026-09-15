@@ -3,189 +3,216 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0f172a">
+<meta name="theme-color" content="#f2f2f7">
 <title>팀 스케줄러</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{color-scheme:dark}
-body{background:#080e1a;color:white;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh;display:flex;justify-content:center}
-button,input{font:inherit}
-button{border:0;cursor:pointer}
-button:disabled{cursor:not-allowed;opacity:.4}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#e8e8ed;color:#1c1c1e;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center}
+button,input{font:inherit;color:inherit}
+button{border:0;cursor:pointer;background:none}
+button:disabled{cursor:not-allowed;opacity:.35}
 
-.shell{width:100%;max-width:390px;min-height:100vh;background:#0f172a;border-left:1px solid #1e293b;border-right:1px solid #1e293b;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.shell{width:100%;max-width:390px;min-height:100vh;background:#f2f2f7;display:flex;flex-direction:column;overflow:hidden;position:relative}
 
-.gate{flex:1;display:flex;flex-direction:column;gap:10px;padding:16px;overflow-y:auto}
-.gate-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px}
-.gate h1{font-size:18px;font-weight:800;letter-spacing:-.3px}
-.gate-sub{font-size:11px;color:#64748b;margin-top:3px}
-.admin-toggle{flex-shrink:0;border-radius:999px;background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:6px 11px;font-size:11px;transition:all .2s}
-.admin-toggle.on{background:#0f2d1a;color:#86efac;border-color:#166534}
-.panel{background:#111827;border:1px solid #1e293b;border-radius:10px;padding:12px}
-.panel-title{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
-.form{display:flex;flex-direction:column;gap:8px}
-.input{width:100%;background:#0f172a;border:1px solid #1e293b;color:white;border-radius:8px;padding:10px 11px;font-size:16px;outline:none;transition:border-color .15s}
-.input:focus{border-color:#3b82f6}
-.input::-moz-placeholder{color:#475569}
-.input::placeholder{color:#475569}
-.btn-primary{background:#2563eb;color:white;border-radius:8px;padding:10px 11px;font-size:13px;font-weight:700;transition:background .15s}
-.btn-primary:hover:not(:disabled){background:#1d4ed8}
-.btn-secondary{background:#1e293b;color:#e2e8f0;border-radius:8px;padding:10px 11px;font-size:13px;transition:background .15s}
-.btn-secondary:hover:not(:disabled){background:#334155}
-.btn-ghost{background:transparent;color:#94a3b8;border:1px solid #1e293b;border-radius:8px;padding:8px 10px;font-size:12px}
-.notice{border-radius:8px;border:1px solid #1e293b;background:#111827;color:#94a3b8;padding:10px 11px;font-size:11px;line-height:1.5;white-space:pre-line}
-.notice.warn{border-color:#7c2d12;background:#1c0a0a;color:#fca5a5}
-.notice.ok{border-color:#14532d;background:#0a1f13;color:#86efac}
-.notice.info{border-color:#1e3a5f;background:#0a1628;color:#93c5fd}
+/* ---------- 공용 ---------- */
+.card{background:#fff;border-radius:16px;padding:14px}
+.sec-label{font-size:11px;font-weight:600;color:#8e8e93;letter-spacing:.02em;margin:0 4px 8px;text-transform:uppercase}
+.input{width:100%;background:#f2f2f7;border:1px solid transparent;border-radius:12px;padding:12px 13px;font-size:16px;outline:none;transition:border-color .15s}
+.input:focus{border-color:#1c1c1e;background:#fff}
+.input::-moz-placeholder{color:#aeaeb2}
+.input::placeholder{color:#aeaeb2}
+.field{background:#f2f2f7;border-radius:12px;padding:8px 13px}
+.field-label{font-size:10px;color:#8e8e93;margin-bottom:2px}
+.field .input{background:transparent;padding:0;border:0;font-size:15px}
+.btn{width:100%;background:#1c1c1e;color:#fff;border-radius:14px;padding:14px;font-size:15px;font-weight:600;transition:opacity .15s}
+.btn:active:not(:disabled){opacity:.7}
+.btn-sub{width:100%;background:#e8e8ed;color:#1c1c1e;border-radius:14px;padding:13px;font-size:14px;font-weight:500}
+.btn-danger{color:#ff3b30}
+.notice{border-radius:12px;padding:12px 13px;font-size:12px;line-height:1.55;white-space:pre-line}
+.notice.warn{background:#ffe9e7;color:#c0261b}
+.notice.ok{background:#e6f5ea;color:#1a7f37}
+.notice.info{background:#eef1f6;color:#5a6472}
 .hidden{display:none!important}
-.room-card{border:1px solid #1e293b;background:#0f172a;border-radius:8px;padding:10px 11px;display:flex;justify-content:space-between;gap:8px;align-items:center}
-.room-card-main{min-width:0}
-.room-card-title{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.room-card-meta{font-size:10px;color:#475569;margin-top:3px;word-break:break-all}
-.stack{display:flex;flex-direction:column;gap:6px;margin-top:4px}
 
+/* ---------- 게이트 ---------- */
+.gate{flex:1;display:flex;flex-direction:column;gap:14px;padding:20px 16px 28px;overflow-y:auto}
+.gate-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.gate h1{font-size:26px;font-weight:800;letter-spacing:-.6px;line-height:1.15}
+.gate-sub{font-size:12px;color:#8e8e93;margin-top:5px}
+.pill{flex-shrink:0;border-radius:999px;background:#e8e8ed;color:#636366;padding:8px 14px;font-size:12px;font-weight:600}
+.pill.on{background:#1c1c1e;color:#fff}
+.form{display:flex;flex-direction:column;gap:9px}
+.code-input{text-align:center;font-size:24px;font-weight:700;letter-spacing:.32em;padding:15px 0}
+.room-card{background:#f2f2f7;border-radius:12px;padding:12px 13px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.room-card-title{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.room-card-meta{font-size:11px;color:#8e8e93;margin-top:3px;font-variant-numeric:tabular-nums}
+.chip{flex-shrink:0;background:#1c1c1e;color:#fff;border-radius:999px;padding:7px 15px;font-size:12px;font-weight:600}
+.stack{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+
+/* ---------- 앱 ---------- */
 .app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
-.header{padding:8px 12px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-shrink:0}
-.header-left{display:flex;flex-direction:column;min-width:0}
-.header h1{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
-.week-label{font-size:10px;color:#475569;display:flex;align-items:center;gap:3px;margin-top:1px}
-.week-nav{background:none;color:#64748b;font-size:13px;padding:0 3px;line-height:1}
-.week-nav:hover:not(:disabled){color:white}
-.header-btns{display:flex;gap:5px;align-items:center;flex-shrink:0}
-.hbtn{font-size:11px;padding:5px 9px;border-radius:6px;white-space:nowrap;transition:background .15s}
-.hbtn-weeks{background:#0f2547;color:#93c5fd}
-.hbtn-admin{background:#0a2018;color:#86efac}
-.hbtn-leave{background:#1e293b;color:#94a3b8}
-.mode-tabs{display:flex;border-bottom:1px solid #1e293b;flex-shrink:0}
-.mode-tab{flex:1;padding:7px 6px;font-size:11px;background:transparent;color:#475569;border-bottom:2px solid transparent;transition:all .15s}
-.mode-tab.on{color:white;border-bottom-color:#3b82f6}
+.topbar{padding:14px 16px 10px;background:#f2f2f7;flex-shrink:0}
+.topbar-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.topbar h1{font-size:20px;font-weight:800;letter-spacing:-.4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.owner-tag{display:inline-block;background:#1c1c1e;color:#fff;font-size:9px;font-weight:700;padding:3px 7px;border-radius:5px;margin-left:6px;vertical-align:2px}
+.week-pick{display:flex;align-items:center;gap:2px;background:#fff;border-radius:999px;padding:5px 6px;flex-shrink:0}
+.week-nav{width:26px;height:26px;border-radius:50%;font-size:15px;color:#8e8e93;line-height:1}
+.week-nav:disabled{opacity:.25}
+.week-now{font-size:13px;font-weight:700;padding:0 6px;min-width:52px;text-align:center}
 
-.grid-wrap{flex:1;overflow:auto}
-.grid{display:grid;grid-template-columns:2.2rem repeat(7,minmax(1.6rem,1fr))}
-.dh{background:#0f172a;position:sticky;top:0;z-index:10;text-align:center;font-size:10px;color:#64748b;padding:4px 0;border-bottom:1px solid #1e293b;font-weight:700}
-.tl{font-size:8px;color:#334155;text-align:right;padding-right:3px;line-height:20px}
-.cell{height:20px;position:relative;border-bottom:.5px solid #131f30}
-.cell.half{border-bottom:.5px dashed #131f30}
+.seg{display:flex;background:#e3e3e8;border-radius:11px;padding:3px;margin:10px 16px 0;flex-shrink:0}
+.seg-btn{flex:1;padding:8px 0;font-size:13px;font-weight:600;color:#636366;border-radius:9px;transition:all .18s}
+.seg-btn.on{background:#fff;color:#1c1c1e;box-shadow:0 1px 3px rgba(0,0,0,.09)}
+
+.view{flex:1;overflow-y:auto;min-height:0}
+.view-pad{padding:14px 16px 24px;display:flex;flex-direction:column;gap:18px}
+
+/* 그리드 */
+.grid-wrap{flex:1;overflow:auto;min-height:0;background:#fff;margin:12px 12px 0;border-radius:16px 16px 0 0;padding-top:0}
+.grid{display:grid;grid-template-columns:2.1rem repeat(7,minmax(1.5rem,1fr))}
+.dh{background:#fff;position:sticky;top:0;z-index:10;text-align:center;font-size:11px;color:#8e8e93;padding:9px 0 7px;font-weight:600;border-bottom:1px solid #f0f0f4}
+.tl{font-size:8.5px;color:#c7c7cc;text-align:right;padding-right:4px;line-height:20px;font-variant-numeric:tabular-nums}
+.cell{height:20px;position:relative;border-bottom:.5px solid #f4f4f7;border-left:.5px solid #f4f4f7}
+.cell.hourline{border-bottom:.5px solid #e9e9ee}
 .cell.editable{cursor:pointer;touch-action:none}
-.badge{position:absolute;bottom:1px;right:2px;font-size:7px;font-weight:900;color:white;text-shadow:0 0 3px rgba(0,0,0,.9);z-index:5;line-height:1}
+.badge{position:absolute;bottom:1px;right:2px;font-size:7.5px;font-weight:900;color:#1c1c1e;z-index:5;line-height:1}
 
-.person-panel{background:#0f172a;border-top:1px solid #1e293b;padding:10px 12px;display:none;flex-shrink:0}
-.person-panel.show{display:block}
-.person-panel-label{font-size:9px;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-.person-list{display:flex;flex-wrap:wrap;gap:6px}
-.pbtn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:11px;border:1.5px solid transparent;background:#1e293b;color:#64748b}
-.pbtn.on{color:white}
-.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+/* 리스트 행 */
+.rows{background:#fff;border-radius:16px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid #f2f2f7;width:100%;text-align:left}
+.row:last-child{border-bottom:0}
+.row:active{background:#fafafa}
+.row-main{flex:1;min-width:0}
+.row-title{font-size:15px;font-weight:500}
+.row-meta{font-size:11.5px;color:#8e8e93;margin-top:2px;word-break:break-all}
+.row-val{font-size:13px;color:#8e8e93;flex-shrink:0;font-variant-numeric:tabular-nums}
+.chev{color:#c7c7cc;font-size:17px;flex-shrink:0;line-height:1}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.empty{text-align:center;padding:48px 20px;color:#aeaeb2;font-size:13px;line-height:1.6}
 
-.bottom-bar{border-top:1px solid #1e293b;background:#0f172a;flex-shrink:0}
-.bottom-tabs{display:flex;padding:4px 6px 2px}
-.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px;background:transparent;color:#475569;border-radius:8px;font-size:9px;transition:all .15s}
-.bottom-tab.on{color:white;background:#1e293b}
-.bottom-tab svg{width:18px;height:18px}
+/* 하단 탭 */
+.tabbar{background:#fff;border-top:1px solid #ebebf0;display:flex;padding:6px 8px 8px;flex-shrink:0}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;color:#aeaeb2;font-size:10px;font-weight:500;transition:color .15s}
+.tab.on{color:#1c1c1e}
+.tab svg{width:22px;height:22px}
 
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:none;align-items:flex-end;justify-content:center}
+/* 팝업 */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:none;align-items:flex-end;justify-content:center}
 .overlay.show{display:flex}
-.popup{background:#111827;border:1px solid #1e293b;border-top:1px solid #334155;border-radius:16px 16px 0 0;width:100%;max-width:390px;max-height:84vh;display:flex;flex-direction:column}
-.popup-header{padding:12px 16px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0}
-.popup-header h2{font-size:13px;font-weight:800}
-.popup-close{background:none;color:#475569;font-size:20px;line-height:1;padding:0 4px}
-.popup-body{flex:1;overflow-y:auto;padding:10px 12px}
-.popup-add{padding:10px 12px;border-top:1px solid #1e293b;flex-shrink:0}
-.popup-add-btn{width:100%;padding:9px;font-size:12px;color:#64748b;border:1px dashed #334155;background:transparent;border-radius:8px}
+.popup{background:#f2f2f7;border-radius:22px 22px 0 0;width:100%;max-width:390px;max-height:86vh;display:flex;flex-direction:column}
+.popup-header{padding:16px 18px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0}
+.popup-header h2{font-size:18px;font-weight:800;letter-spacing:-.3px}
+.popup-close{width:30px;height:30px;border-radius:50%;background:#e3e3e8;color:#636366;font-size:16px;line-height:1}
+.popup-body{flex:1;overflow-y:auto;padding:0 16px}
+.popup-foot{padding:12px 16px 22px;flex-shrink:0}
 
-.week-card{background:#0f172a;border:1px solid #1e293b;border-radius:8px;margin-bottom:8px;overflow:hidden;cursor:pointer}
-.week-card.active-card{border-color:#3b82f6}
-.week-card-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #131f30;gap:8px}
-.week-card-title{font-size:12px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.week-card-actions{display:flex;gap:2px;flex-shrink:0}
-.wc-btn{background:none;color:#475569;font-size:13px;padding:3px 5px;border-radius:4px}
-.mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;padding:6px 8px}
+.week-card{background:#fff;border-radius:14px;margin-bottom:9px;overflow:hidden;cursor:pointer;border:1.5px solid transparent}
+.week-card.active-card{border-color:#1c1c1e}
+.week-card-header{display:flex;align-items:center;justify-content:space-between;padding:11px 13px 9px;gap:8px}
+.week-card-title{font-size:14px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.week-card-actions{display:flex;gap:1px;flex-shrink:0}
+.wc-btn{width:27px;height:27px;border-radius:7px;color:#8e8e93;font-size:13px;background:#f2f2f7}
+.mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:0 12px 12px}
 .mini-col{display:flex;flex-direction:column;gap:1px}
-.mini-day{font-size:7px;color:#334155;text-align:center;margin-bottom:2px}
-.mini-cell{height:3px;border-radius:1px}
+.mini-day{font-size:8px;color:#c7c7cc;text-align:center;margin-bottom:3px}
+.mini-cell{height:3px;border-radius:1px;background:#f0f0f4}
 </style>
-  <script type="module" crossorigin src="/team_scheduler/assets/index-BfanGAsk.js"></script>
+  <script type="module" crossorigin src="/team_scheduler/assets/index-Cf8Xe3RJ.js"></script>
 <link rel="manifest" href="/team_scheduler/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/team_scheduler/registerSW.js"></script></head>
 <body>
 <div class="shell">
 
+  <!-- ============ 게이트 ============ -->
   <section class="gate" id="gate">
     <div class="gate-top">
       <div>
         <h1>팀 스케줄러</h1>
         <div class="gate-sub" id="auth-status">연결 중...</div>
       </div>
-      <button class="admin-toggle" id="admin-toggle" type="button">일반 모드</button>
+      <button class="pill" id="admin-toggle" type="button">방 만들기</button>
     </div>
 
     <div class="notice warn hidden" id="config-warning"></div>
     <div class="notice hidden" id="status-box"></div>
 
-    <div class="panel">
-      <div class="panel-title">방 입장</div>
-      <div class="form">
-        <input class="input" id="join-code" inputmode="numeric" maxlength="6" placeholder="6자리 입장 번호">
-        <input class="input" id="join-name" maxlength="24" placeholder="내 이름">
-        <button class="btn-primary" id="join-btn" type="button">입장</button>
-        <button class="btn-secondary hidden" id="resume-btn" type="button">최근 방 다시 열기</button>
+    <div>
+      <div class="sec-label">방 입장</div>
+      <div class="card">
+        <div class="form">
+          <input class="input code-input" id="join-code" inputmode="numeric" maxlength="6" placeholder="000000">
+          <input class="input" id="join-name" maxlength="24" placeholder="내 이름">
+          <button class="btn" id="join-btn" type="button">입장</button>
+          <button class="btn-sub hidden" id="resume-btn" type="button">최근 방 다시 열기</button>
+        </div>
       </div>
     </div>
 
-    <div class="panel hidden" id="admin-panel">
-      <div class="panel-title">관리자 — 방 생성</div>
-      <div class="notice info" id="admin-uid-hint">로그인 후 UID가 표시됩니다</div>
-      <div class="form" style="margin-top:10px">
-        <input class="input" id="room-title" maxlength="40" placeholder="방 이름">
-        <input class="input" id="room-password" type="password" minlength="4" placeholder="관리자 비밀번호 (4자 이상)">
-        <button class="btn-primary" id="create-room-btn" type="button">방 생성</button>
+    <div class="hidden" id="admin-panel">
+      <div class="sec-label">새 방 만들기</div>
+      <div class="card">
+        <div class="form">
+          <input class="input" id="room-title" maxlength="40" placeholder="방 이름">
+          <input class="input" id="room-password" type="password" minlength="4" placeholder="관리 비밀번호 (4자 이상)">
+          <button class="btn" id="create-room-btn" type="button">방 생성</button>
+        </div>
+        <div class="notice ok hidden" id="created-room" style="margin-top:10px"></div>
       </div>
-      <div class="notice ok hidden" id="created-room"></div>
       <div class="stack" id="admin-room-list"></div>
     </div>
   </section>
 
+  <!-- ============ 앱 ============ -->
   <section class="app hidden" id="app">
-    <div class="header">
-      <div class="header-left">
+    <div class="topbar">
+      <div class="topbar-row">
         <h1 id="room-title-label">팀 스케줄러</h1>
-        <div class="week-label">
+        <div class="week-pick" id="week-pick">
           <button class="week-nav" id="prev-week" type="button">‹</button>
-          <span id="week-label-text">1주차</span>
+          <span class="week-now" id="week-label-text">1주차</span>
           <button class="week-nav" id="next-week" type="button">›</button>
         </div>
       </div>
-      <div class="header-btns">
-        <button class="hbtn hbtn-admin hidden" id="delete-room-btn" type="button">방 삭제</button>
-        <button class="hbtn hbtn-weeks" id="weeks-btn" type="button">주차</button>
-        <button class="hbtn hbtn-leave" id="leave-btn" type="button">나가기</button>
-      </div>
     </div>
 
-    <div class="mode-tabs">
-      <button class="mode-tab on" id="mt-edit" type="button">내 시간표</button>
-      <button class="mode-tab" id="mt-overview" type="button">종합 보기</button>
+    <div class="seg" id="seg">
+      <button class="seg-btn on" id="mt-edit" type="button">내 시간표</button>
+      <button class="seg-btn" id="mt-overview" type="button">종합 보기</button>
     </div>
 
-    <div class="grid-wrap">
+    <!-- 시간표 -->
+    <div class="grid-wrap" id="view-grid">
       <div class="grid" id="g"></div>
     </div>
 
-    <div class="person-panel" id="person-panel">
-      <div class="person-panel-label">팀원</div>
-      <div class="person-list" id="plist"></div>
+    <!-- 팀원 -->
+    <div class="view hidden" id="view-people">
+      <div class="view-pad">
+        <div>
+          <div class="sec-label" id="people-count-label">팀원</div>
+          <div class="rows" id="plist"></div>
+        </div>
+      </div>
     </div>
 
-    <div class="bottom-bar">
-      <div class="bottom-tabs">
-        <button class="bottom-tab on" id="bt-grid" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          시간표
-        </button>
-        <button class="bottom-tab" id="bt-people" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg>
-          팀원
-        </button>
-      </div>
+    <!-- 설정 -->
+    <div class="view hidden" id="view-settings">
+      <div class="view-pad" id="settings-body"></div>
+    </div>
+
+    <div class="tabbar">
+      <button class="tab on" id="bt-grid" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M3 9h18M9 9v12M15 9v12"/></svg>
+        시간표
+      </button>
+      <button class="tab" id="bt-people" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.8 20.5v-1.7a4 4 0 0 1 4-4h4.4a4 4 0 0 1 4 4v1.7"/><path d="M16.5 4.9a3.4 3.4 0 0 1 0 6.3"/><path d="M21.2 20.5v-1.7a4 4 0 0 0-3-3.8"/></svg>
+        팀원
+      </button>
+      <button class="tab" id="bt-settings" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.1"/><path d="M19.6 14.4a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.84 2.84l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.12a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.84-2.84l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.12a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.84-2.84l.06.06a1.7 1.7 0 0 0 1.87.34H9.1a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.12a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.84 2.84l-.06.06a1.7 1.7 0 0 0-.34 1.87v.08a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.12a1.7 1.7 0 0 0-1.56 1.03z"/></svg>
+        설정
+      </button>
     </div>
   </section>
 </div>
@@ -193,24 +220,24 @@ button:disabled{cursor:not-allowed;opacity:.4}
 <div class="overlay" id="overlay">
   <div class="popup">
     <div class="popup-header">
-      <h2>주차 목록</h2>
-      <button class="popup-close" id="popup-close" type="button">×</button>
+      <h2>주차 관리</h2>
+      <button class="popup-close" id="popup-close" type="button">✕</button>
     </div>
     <div class="popup-body" id="popup-body"></div>
-    <div class="popup-add">
-      <button class="popup-add-btn hidden" id="add-week-btn" type="button">+ 새 주차 추가</button>
+    <div class="popup-foot">
+      <button class="btn hidden" id="add-week-btn" type="button">+ 새 주차 추가</button>
     </div>
   </div>
 </div>
 
 <script>
 window.SCHEDULER_FIREBASE_CONFIG = {
-  apiKey:"AIzaSyCkJZ-kgkjNAmi4xlbFh_WUdPoznGqK9ko",
+  apiKey:"여기에_붙여넣기",
   authDomain:"team-time-management-c4c77.firebaseapp.com",
   projectId:"team-time-management-c4c77",
-  storageBucket:"team-time-management-c4c77.firebasestorage.app",
-  messagingSenderId:"817223668472",
-  appId:"1:817223668472:web:1eb5fd9ebdfe1f0573a10d"
+  storageBucket:"여기에_붙여넣기",
+  messagingSenderId:"여기에_붙여넣기",
+  appId:"여기에_붙여넣기"
 };
 </script>
 
