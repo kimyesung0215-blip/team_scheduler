@@ -12,9 +12,12 @@
   --text:#14171f; --text-2:#6b7280; --text-3:#a5abb6;
   --line:#e8ebf1; --line-2:#f1f3f7;
   --accent:#2f6df6; --accent-soft:#e8efff; --accent-text:#ffffff;
-  --danger:#e5484d;
+  --danger:#e5484d; --danger-soft:#fdeaea;
+  --ok:47,109,246; --no:229,72,77;
   --grid-line:#eef0f5; --grid-hour:#e3e6ed;
   --heat:47,109,246; --heat-max:.68;
+  --blocked:#9aa1ad;
+  --tl-dawn:#f3f5fa; --tl-day:#fdf9ef; --tl-evening:#f7f1fa; --tl-night:#eceef6;
   --shadow:0 1px 3px rgba(20,23,31,.07);
 }
 :root[data-theme="dark"]{
@@ -22,9 +25,12 @@
   --text:#eef1f6; --text-2:#8f97a6; --text-3:#5e6676;
   --line:#242a36; --line-2:#1c212b;
   --accent:#4d86ff; --accent-soft:#1a2740; --accent-text:#ffffff;
-  --danger:#ff6b6b;
+  --danger:#ff6b6b; --danger-soft:#3a1d22;
+  --ok:120,160,255; --no:255,107,107;
   --grid-line:#1d222d; --grid-hour:#262c39;
   --heat:120,160,255; --heat-max:.72;
+  --blocked:#4a5162;
+  --tl-dawn:#131826; --tl-day:#1b1e17; --tl-evening:#1e1826; --tl-night:#10131f;
   --shadow:0 1px 3px rgba(0,0,0,.3);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -72,8 +78,9 @@ button:disabled{cursor:not-allowed;opacity:.35}
 /* ===== 앱 ===== */
 .app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
 .topbar{padding:14px 16px 10px;flex-shrink:0}
-.topbar-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.topbar h1{font-size:20px;font-weight:800;letter-spacing:-.4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar-row{display:flex;align-items:center;gap:9px}
+.back-btn{width:32px;height:32px;border-radius:50%;background:var(--surface);color:var(--text-2);font-size:17px;line-height:1;flex-shrink:0;box-shadow:var(--shadow)}
+.topbar h1{flex:1;min-width:0;font-size:19px;font-weight:800;letter-spacing:-.4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .owner-tag{display:inline-block;background:var(--accent-soft);color:var(--accent);font-size:9px;font-weight:700;padding:3px 7px;border-radius:5px;margin-left:6px;vertical-align:2px}
 .week-pick{display:flex;align-items:center;gap:2px;background:var(--surface);border-radius:999px;padding:5px 6px;flex-shrink:0;box-shadow:var(--shadow)}
 .week-nav{width:26px;height:26px;border-radius:50%;font-size:15px;color:var(--text-2);line-height:1}
@@ -84,17 +91,29 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .seg-btn{flex:1;padding:8px 0;font-size:13px;font-weight:600;color:var(--text-2);border-radius:9px;transition:all .18s}
 .seg-btn.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 
+/* 도구 툴바 */
+.toolbar{display:flex;gap:6px;margin:8px 16px 0;flex-shrink:0}
+.tool{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0 6px;border-radius:11px;background:var(--surface);color:var(--text-2);font-size:10px;font-weight:600;border:1.5px solid transparent;box-shadow:var(--shadow);transition:all .15s}
+.tool svg{width:17px;height:17px}
+.tool.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.tool.on.t-no{border-color:var(--danger);color:var(--danger);background:var(--danger-soft)}
+
 .view{flex:1;overflow-y:auto;min-height:0}
 .view-pad{padding:14px 16px 24px;display:flex;flex-direction:column;gap:18px}
 
 /* 그리드 */
-.grid-wrap{flex:1;overflow:auto;min-height:0;background:var(--surface);margin:12px 12px 0;border-radius:16px 16px 0 0}
+.grid-wrap{flex:1;overflow:auto;min-height:0;background:var(--surface);margin:10px 12px 0;border-radius:16px 16px 0 0}
 .grid{display:grid;grid-template-columns:2.1rem repeat(7,minmax(1.5rem,1fr))}
 .dh{background:var(--surface);position:sticky;top:0;z-index:10;text-align:center;font-size:11px;color:var(--text-2);padding:9px 0 7px;font-weight:600;border-bottom:1px solid var(--line-2)}
-.tl{font-size:8.5px;color:var(--text-3);text-align:right;padding-right:4px;line-height:20px;font-variant-numeric:tabular-nums}
+.tl{font-size:8.5px;color:var(--text-2);text-align:right;padding-right:4px;line-height:20px;font-variant-numeric:tabular-nums}
+.tl.dawn{background:var(--tl-dawn)}
+.tl.day{background:var(--tl-day)}
+.tl.evening{background:var(--tl-evening)}
+.tl.night{background:var(--tl-night)}
 .cell{height:20px;position:relative;border-bottom:.5px solid var(--grid-line);border-left:.5px solid var(--grid-line)}
 .cell.hourline{border-bottom:.5px solid var(--grid-hour)}
-.cell.editable{cursor:pointer;touch-action:none}
+.cell.daypart,.tl.boundary{border-top:1.5px solid var(--grid-hour)}
+.grid.drawing .cell{cursor:pointer;touch-action:none}
 .badge{position:absolute;bottom:1px;right:2px;font-size:7.5px;font-weight:900;z-index:5;line-height:1;color:var(--text)}
 
 /* 리스트 */
@@ -201,6 +220,7 @@ button:disabled{cursor:not-allowed;opacity:.35}
   <section class="app hidden" id="app">
     <div class="topbar">
       <div class="topbar-row">
+        <button class="back-btn" id="back-btn" type="button" aria-label="첫 화면으로">←</button>
         <h1 id="room-title-label">팀 스케줄러</h1>
         <div class="week-pick" id="week-pick">
           <button class="week-nav" id="prev-week" type="button">‹</button>
@@ -213,6 +233,25 @@ button:disabled{cursor:not-allowed;opacity:.35}
     <div class="seg" id="seg">
       <button class="seg-btn on" id="mt-edit" type="button">내 시간표</button>
       <button class="seg-btn" id="mt-overview" type="button">종합 보기</button>
+    </div>
+
+    <div class="toolbar" id="toolbar">
+      <button class="tool on" id="tool-move" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3"/></svg>
+        이동
+      </button>
+      <button class="tool" id="tool-ok" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        가능
+      </button>
+      <button class="tool t-no" id="tool-no" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        불가
+      </button>
+      <button class="tool" id="tool-erase" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H8.5l-5-5a2 2 0 0 1 0-2.8l8.3-8.3a2 2 0 0 1 2.8 0l5.7 5.7a2 2 0 0 1 0 2.8L15 18"/><path d="M7 11l6 6"/></svg>
+        지우개
+      </button>
     </div>
 
     <div class="grid-wrap" id="view-grid">
@@ -291,13 +330,17 @@ const MINI_TIMES=Array.from({length:24},(_,i)=>{
   const h=9+Math.floor(i/2),m=i%2===0?'00':'30';
   return`${String(h).padStart(2,'0')}:${m}`;
 });
+/* 시간대 구분: 06~09 dawn / 09~18 day / 18~22 evening / 22~ night */
+function daypartOf(t){
+  const h=parseInt(t.slice(0,2),10);
+  if(h<9)return'dawn';
+  if(h<18)return'day';
+  if(h<22)return'evening';
+  return'night';
+}
 const COLORS=[
-  {solid:'#e5484d',mine:.42,other:.12},
-  {solid:'#2f6df6',mine:.42,other:.12},
-  {solid:'#1a9e63',mine:.42,other:.12},
-  {solid:'#f2820c',mine:.42,other:.12},
-  {solid:'#8b5cf6',mine:.42,other:.12},
-  {solid:'#e93d82',mine:.42,other:.12},
+  {solid:'#e5484d'},{solid:'#2f6df6'},{solid:'#1a9e63'},
+  {solid:'#f2820c'},{solid:'#8b5cf6'},{solid:'#e93d82'},
 ];
 const DEFAULT_WEEKS=['1주차','2주차'];
 const SESSION_KEY='ts:last-room';
@@ -316,9 +359,11 @@ const el={
   roomTitle:$('room-title'),ownerName:$('owner-name'),roomPassword:$('room-password'),createRoomBtn:$('create-room-btn'),
   adminRoomList:$('admin-room-list'),myRoomsSection:$('my-rooms-section'),
   recentSection:$('recent-section'),recentList:$('recent-list'),
+  backBtn:$('back-btn'),
   roomTitleLabel:$('room-title-label'),weekLabelText:$('week-label-text'),weekPick:$('week-pick'),
   prevWeek:$('prev-week'),nextWeek:$('next-week'),
   seg:$('seg'),mtEdit:$('mt-edit'),mtOverview:$('mt-overview'),
+  toolbar:$('toolbar'),toolMove:$('tool-move'),toolOk:$('tool-ok'),toolNo:$('tool-no'),toolErase:$('tool-erase'),
   grid:$('g'),viewGrid:$('view-grid'),viewPeople:$('view-people'),viewSettings:$('view-settings'),
   personList:$('plist'),peopleCountLabel:$('people-count-label'),settingsBody:$('settings-body'),
   btGrid:$('bt-grid'),btPeople:$('bt-people'),btSettings:$('bt-settings'),
@@ -332,8 +377,8 @@ const MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 const AUTO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 3a9 9 0 0 1 0 18" fill="currentColor" stroke="none" opacity=".35"/></svg>';
 
 let fbApp=null,auth=null,db=null,user=null;
-let room=null,people=[],curWeek=0,mode='edit',tab='grid';
-let drag=false,dragMode='add';
+let room=null,people=[],curWeek=0,mode='edit',tab='grid',tool='move';
+let drag=false;
 let createOpen=localStorage.getItem(CREATE_KEY)==='1';
 let themePref=localStorage.getItem(THEME_KEY)||'auto';
 let roomUnsub=null,membersUnsub=null,saveTimer=null,firstScroll=false;
@@ -395,10 +440,15 @@ function bindEvents(){
   el.adminToggle.addEventListener('click',()=>setCreateUI(!createOpen));
   el.joinBtn.addEventListener('click',joinRoom);
   el.createRoomBtn.addEventListener('click',createRoom);
+  el.backBtn.addEventListener('click',()=>leaveRoom(false));
   el.prevWeek.addEventListener('click',()=>gotoWeek(curWeek-1));
   el.nextWeek.addEventListener('click',()=>gotoWeek(curWeek+1));
   el.mtEdit.addEventListener('click',()=>setMode('edit'));
   el.mtOverview.addEventListener('click',()=>setMode('overview'));
+  el.toolMove.addEventListener('click',()=>setTool('move'));
+  el.toolOk.addEventListener('click',()=>setTool('ok'));
+  el.toolNo.addEventListener('click',()=>setTool('no'));
+  el.toolErase.addEventListener('click',()=>setTool('erase'));
   el.btGrid.addEventListener('click',()=>selectTab('grid'));
   el.btPeople.addEventListener('click',()=>selectTab('people'));
   el.btSettings.addEventListener('click',()=>selectTab('settings'));
@@ -412,20 +462,20 @@ function bindEvents(){
   el.joinName.addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom();});
 
   el.grid.addEventListener('pointerdown',e=>{
-    const cell=e.target.closest?.('.cell.editable');
+    if(tool==='move'||mode!=='edit')return;
+    const cell=e.target.closest?.('.cell');
     if(!cell||!cell.dataset.key)return;
     const me=getMe();if(!me)return;
     e.preventDefault();
     drag=true;
-    dragMode=getSlotsSet(me,curWeek).has(cell.dataset.key)?'remove':'add';
-    setSlot(cell.dataset.key,dragMode==='add');
+    applyTool(cell.dataset.key);
   });
   document.addEventListener('pointermove',e=>{
     if(!drag)return;
     e.preventDefault();
     const t=document.elementFromPoint(e.clientX,e.clientY);
-    const cell=t&&t.closest?t.closest('.cell.editable'):null;
-    if(cell&&cell.dataset.key)setSlot(cell.dataset.key,dragMode==='add');
+    const cell=t&&t.closest?t.closest('.cell'):null;
+    if(cell&&cell.dataset.key)applyTool(cell.dataset.key);
   },{passive:false});
   document.addEventListener('pointerup',()=>{if(drag)saveNow();drag=false;});
   document.addEventListener('pointercancel',()=>{if(drag)saveNow();drag=false;});
@@ -519,17 +569,38 @@ async function resumeLastRoom(){
   }catch(e){setStatus(fmtErr(e),true);}
 }
 
+/* 게이트 목록에서 방 열기 — 삭제된 방이면 목록에서 제거 */
+async function openFromList(roomId){
+  if(!requireFB())return;
+  try{
+    const snap=await getDoc(doc(db,'rooms',roomId));
+    if(!snap.exists()){
+      forgetAdminRoom(roomId);
+      forgetVisited(roomId);
+      renderGateLists();
+      window.alert('삭제된 방이에요. 목록에서 지웠어요.');
+      return;
+    }
+    saveSession(roomId);
+    enterRoom(roomId);
+  }catch(e){window.alert(fmtErr(e));}
+}
+
 /* ---------- 방 ---------- */
 function enterRoom(roomId){
   closeWatchers();
   room={id:roomId,title:'',weekLabels:DEFAULT_WEEKS,createdBy:null};
   people=[];curWeek=0;firstScroll=false;cachedEntryCode=null;
+  setTool('move');
   selectTab('grid');
   el.gate.classList.add('hidden');
   el.app.classList.remove('hidden');
 
   roomUnsub=onSnapshot(doc(db,'rooms',roomId),snap=>{
-    if(!snap.exists()){leaveRoom(true);window.alert('방이 삭제되었어요.');return;}
+    if(!snap.exists()){
+      forgetAdminRoom(roomId);forgetVisited(roomId);
+      leaveRoom(true);window.alert('방이 삭제되었어요.');return;
+    }
     const d=snap.data();
     room={id:snap.id,title:d.title||'팀 스케줄러',createdBy:d.createdBy,
       weekLabels:Array.isArray(d.weekLabels)&&d.weekLabels.length?d.weekLabels:DEFAULT_WEEKS};
@@ -569,7 +640,7 @@ function closeWatchers(){
 
 function isOwner(){return Boolean(room&&user&&room.createdBy===user.uid);}
 
-/* ---------- 탭/모드 ---------- */
+/* ---------- 탭/모드/도구 ---------- */
 function selectTab(t){
   tab=t;
   el.btGrid.className=`tab${t==='grid'?' on':''}`;
@@ -580,6 +651,7 @@ function selectTab(t){
   el.viewSettings.classList.toggle('hidden',t!=='settings');
   el.seg.classList.toggle('hidden',t!=='grid');
   el.weekPick.classList.toggle('hidden',t!=='grid');
+  el.toolbar.classList.toggle('hidden',t!=='grid'||mode!=='edit');
   if(t==='people')renderPeople();
   if(t==='settings')renderSettings();
 }
@@ -588,7 +660,18 @@ function setMode(m){
   mode=m;
   el.mtEdit.className=`seg-btn${m==='edit'?' on':''}`;
   el.mtOverview.className=`seg-btn${m==='overview'?' on':''}`;
+  el.toolbar.classList.toggle('hidden',m!=='edit');
+  if(m!=='edit')setTool('move');
   render();
+}
+
+function setTool(t){
+  tool=t;
+  el.toolMove.className=`tool${t==='move'?' on':''}`;
+  el.toolOk.className=`tool${t==='ok'?' on':''}`;
+  el.toolNo.className=`tool t-no${t==='no'?' on':''}`;
+  el.toolErase.className=`tool${t==='erase'?' on':''}`;
+  el.grid.classList.toggle('drawing',t!=='move');
 }
 
 function gotoWeek(i){
@@ -685,7 +768,7 @@ async function clearMyWeek(){
   const me=getMe();if(!me||!room)return;
   if(!window.confirm(`"${room.weekLabels[curWeek]}"의 내 입력을 모두 지울까요?`))return;
   me.schedules=me.schedules||{};
-  me.schedules[String(curWeek)]=[];
+  me.schedules[String(curWeek)]={ok:[],no:[]};
   render();
   await saveNow();
 }
@@ -813,12 +896,15 @@ function renderPeople(){
   people.forEach(p=>{
     const isMe=p.id===user?.uid;
     const c=COLORS[(p.ci||0)%COLORS.length];
-    const filled=Object.values(p.schedules||{}).reduce((s,a)=>s+(Array.isArray(a)?a.length:0),0);
+    let okCount=0;
+    Object.values(p.schedules||{}).forEach(w=>{
+      if(w&&Array.isArray(w.ok))okCount+=w.ok.length;
+    });
     const r=document.createElement('div');r.className='row';
     const av=document.createElement('div');av.className='avatar';
     av.style.background=c.solid;av.textContent=(p.name||'?').slice(0,1);
     const main=document.createElement('div');main.className='row-main';
-    main.innerHTML=`<div class="row-title">${esc(p.name||'이름 없음')}${isMe?' · 나':''}${p.id===room.createdBy?'<span class="owner-tag">관리자</span>':''}</div><div class="row-meta">${(filled/2).toFixed(1)}시간 입력</div>`;
+    main.innerHTML=`<div class="row-title">${esc(p.name||'이름 없음')}${isMe?' · 나':''}${p.id===room.createdBy?'<span class="owner-tag">관리자</span>':''}</div><div class="row-meta">가능 시간 ${(okCount/2).toFixed(1)}시간</div>`;
     r.appendChild(av);r.appendChild(main);
     if(owner&&!isMe){
       const b=document.createElement('button');b.type='button';b.className='row-val txt-danger';b.textContent='내보내기';
@@ -834,8 +920,13 @@ function render(){
   if(!room)return;
   const me=getMe();
   const total=Math.max(people.length,1);
-  const heat=getComputedStyle(document.documentElement).getPropertyValue('--heat').trim();
-  const heatMax=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--heat-max'))||.7;
+  const css=getComputedStyle(document.documentElement);
+  const heat=css.getPropertyValue('--heat').trim();
+  const heatMax=parseFloat(css.getPropertyValue('--heat-max'))||.7;
+  const okRGB=css.getPropertyValue('--ok').trim();
+  const noRGB=css.getPropertyValue('--no').trim();
+  const blocked=css.getPropertyValue('--blocked').trim();
+
   el.roomTitleLabel.textContent=room.title;
   el.weekLabelText.textContent=room.weekLabels[curWeek]||'1주차';
   el.prevWeek.disabled=curWeek<=0;
@@ -845,42 +936,70 @@ function render(){
   const corner=document.createElement('div');corner.className='dh';el.grid.appendChild(corner);
   DAYS.forEach(d=>{const h=document.createElement('div');h.className='dh';h.textContent=d;el.grid.appendChild(h);});
 
-  const mySet=me?getSlotsSet(me,curWeek):new Set();
+  const mine=me?getSlots(me,curWeek):{ok:new Set(),no:new Set()};
   const editable=mode==='edit'&&Boolean(me);
+  const slotsCache=people.map(p=>({p,s:getSlots(p,curWeek)}));
 
+  let prevPart=null;
   TIMES.forEach((t,ti)=>{
-    const tl=document.createElement('div');tl.className='tl';tl.textContent=ti%2===0?t:'';el.grid.appendChild(tl);
+    const part=daypartOf(t);
+    const isBoundary=prevPart!==null&&part!==prevPart;
+    prevPart=part;
+
+    const tl=document.createElement('div');
+    tl.className=`tl ${part}${isBoundary?' boundary':''}`;
+    tl.textContent=ti%2===0?t:'';
+    el.grid.appendChild(tl);
+
     DKEYS.forEach(dk=>{
       const key=`${dk}-${t}`;
       const cell=document.createElement('div');
-      cell.className=`cell${ti%2?' hourline':''}${editable?' editable':''}`;
+      cell.className=`cell${ti%2?' hourline':''}${isBoundary?' daypart':''}`;
       if(editable)cell.dataset.key=key;
-      const active=people.filter(p=>getSlotsSet(p,curWeek).has(key));
 
       if(mode==='edit'){
-        active.forEach(p=>{
+        /* 팀원 가능 시간(옅게) */
+        slotsCache.forEach(({p,s})=>{
           if(p.id===user?.uid)return;
-          const c=COLORS[(p.ci||0)%COLORS.length];
-          const l=document.createElement('div');
-          l.style.cssText=`position:absolute;inset:0;background:${c.solid};opacity:${c.other}`;
-          cell.appendChild(l);
+          if(s.ok.has(key)){
+            const c=COLORS[(p.ci||0)%COLORS.length];
+            const l=document.createElement('div');
+            l.style.cssText=`position:absolute;inset:0;background:${c.solid};opacity:.1`;
+            cell.appendChild(l);
+          }
         });
-        if(me&&mySet.has(key)){
-          const c=COLORS[(me.ci||0)%COLORS.length];
+        /* 내 입력 */
+        if(mine.ok.has(key)){
           const l=document.createElement('div');
-          l.style.cssText=`position:absolute;inset:0;background:${c.solid};opacity:${c.mine}`;
+          l.style.cssText=`position:absolute;inset:0;background:rgba(${okRGB},.42)`;
+          cell.appendChild(l);
+        } else if(mine.no.has(key)){
+          const l=document.createElement('div');
+          l.style.cssText=`position:absolute;inset:0;background:rgba(${noRGB},.4)`;
           cell.appendChild(l);
         }
-      } else if(active.length>0){
-        const a=((heatMax/total)*active.length).toFixed(2);
-        const l=document.createElement('div');
-        l.style.cssText=`position:absolute;inset:0;background:rgba(${heat},${a})`;
-        cell.appendChild(l);
-        if(active.length>=2){
-          const b=document.createElement('span');b.className='badge';
-          b.textContent=active.length;
-          if(active.length/total>0.6)b.style.color='#fff';
-          cell.appendChild(b);
+      } else {
+        /* 종합 보기 */
+        let okCnt=0,noCnt=0;
+        slotsCache.forEach(({s})=>{
+          if(s.ok.has(key))okCnt++;
+          if(s.no.has(key))noCnt++;
+        });
+        if(noCnt>0){
+          const l=document.createElement('div');
+          l.style.cssText=`position:absolute;inset:0;background:repeating-linear-gradient(45deg,${blocked} 0 2px,transparent 2px 5px);opacity:.5`;
+          cell.appendChild(l);
+        } else if(okCnt>0){
+          const a=((heatMax/total)*okCnt).toFixed(2);
+          const l=document.createElement('div');
+          l.style.cssText=`position:absolute;inset:0;background:rgba(${heat},${a})`;
+          cell.appendChild(l);
+          if(okCnt>=2){
+            const b=document.createElement('span');b.className='badge';
+            b.textContent=okCnt;
+            if(okCnt/total>0.6)b.style.color='#fff';
+            cell.appendChild(b);
+          }
         }
       }
       el.grid.appendChild(cell);
@@ -929,13 +1048,16 @@ function renderPopup(){
 function buildMiniGrid(weekIdx){
   const div=document.createElement('div');div.className='mini-grid';
   const total=Math.max(people.length,1);
-  const heat=getComputedStyle(document.documentElement).getPropertyValue('--heat').trim();
-  const heatMax=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--heat-max'))||.7;
+  const css=getComputedStyle(document.documentElement);
+  const heat=css.getPropertyValue('--heat').trim();
+  const heatMax=parseFloat(css.getPropertyValue('--heat-max'))||.7;
+  const slotsCache=people.map(p=>getSlots(p,weekIdx));
   DKEYS.forEach((dk,di)=>{
     const col=document.createElement('div');col.className='mini-col';
     const dl=document.createElement('div');dl.className='mini-day';dl.textContent=DAYS[di];col.appendChild(dl);
     MINI_TIMES.forEach(t=>{
-      const cnt=people.filter(p=>getSlotsSet(p,weekIdx).has(`${dk}-${t}`)).length;
+      const key=`${dk}-${t}`;
+      const cnt=slotsCache.reduce((s,x)=>s+(x.ok.has(key)?1:0),0);
       const cell=document.createElement('div');cell.className='mini-cell';
       if(cnt>0)cell.style.background=`rgba(${heat},${((heatMax/total)*cnt).toFixed(2)})`;
       col.appendChild(cell);
@@ -948,18 +1070,33 @@ function buildMiniGrid(weekIdx){
 /* ---------- 데이터 ---------- */
 function getMe(){return people.find(p=>p.id===user?.uid)||null;}
 
-function getSlotsSet(person,weekIdx){
-  const slots=person?.schedules?.[String(weekIdx)]||[];
-  return new Set(Array.isArray(slots)?slots:[]);
+/* 3상태: {ok:Set, no:Set}. 옛 배열 형식은 무시 */
+function getSlots(person,weekIdx){
+  const w=person?.schedules?.[String(weekIdx)];
+  if(!w||Array.isArray(w))return{ok:new Set(),no:new Set()};
+  return{
+    ok:new Set(Array.isArray(w.ok)?w.ok:[]),
+    no:new Set(Array.isArray(w.no)?w.no:[]),
+  };
 }
 
-function setSlot(key,add){
+function applyTool(key){
   const me=getMe();if(!me)return;
-  const set=getSlotsSet(me,curWeek);
-  if(add===set.has(key))return;
-  if(add)set.add(key);else set.delete(key);
+  const s=getSlots(me,curWeek);
+  let changed=false;
+  if(tool==='ok'){
+    if(!s.ok.has(key)){s.ok.add(key);changed=true;}
+    if(s.no.delete(key))changed=true;
+  } else if(tool==='no'){
+    if(!s.no.has(key)){s.no.add(key);changed=true;}
+    if(s.ok.delete(key))changed=true;
+  } else if(tool==='erase'){
+    if(s.ok.delete(key))changed=true;
+    if(s.no.delete(key))changed=true;
+  }
+  if(!changed)return;
   me.schedules=me.schedules||{};
-  me.schedules[String(curWeek)]=[...set].sort();
+  me.schedules[String(curWeek)]={ok:[...s.ok].sort(),no:[...s.no].sort()};
   render();
   saveSoon();
 }
@@ -997,23 +1134,24 @@ function forgetVisited(id){
 function getVisited(){try{return JSON.parse(localStorage.getItem(VISITED_KEY)||'[]');}catch{return[];}}
 
 function renderGateLists(){
-  /* 최근 들어간 방 */
   const visited=getVisited();
+  const mine=getAdminRooms();
+  const mineIds=new Set(mine.map(x=>x.roomId));
+
   el.recentList.innerHTML='';
-  el.recentSection.classList.toggle('hidden',!visited.length);
-  visited.forEach(r=>{
+  const recentOnly=visited.filter(x=>!mineIds.has(x.roomId));
+  el.recentSection.classList.toggle('hidden',!recentOnly.length);
+  recentOnly.forEach(r=>{
     const card=document.createElement('div');card.className='card';card.style.padding='0';
     const inner=document.createElement('div');inner.className='room-card';
     inner.innerHTML=`<div><div class="room-card-title">${esc(r.title||'방')}</div></div>`;
     const btn=document.createElement('button');btn.type='button';btn.className='chip';btn.textContent='입장';
-    btn.addEventListener('click',()=>{saveSession(r.roomId);enterRoom(r.roomId);});
+    btn.addEventListener('click',()=>openFromList(r.roomId));
     inner.appendChild(btn);
     card.appendChild(inner);
     el.recentList.appendChild(card);
   });
 
-  /* 내가 만든 방 */
-  const mine=getAdminRooms();
   el.adminRoomList.innerHTML='';
   el.myRoomsSection.classList.toggle('hidden',!mine.length);
   mine.forEach(r=>{
@@ -1021,7 +1159,7 @@ function renderGateLists(){
     const inner=document.createElement('div');inner.className='room-card';
     inner.innerHTML=`<div><div class="room-card-title">${esc(r.title||'방')}</div><div class="room-card-meta">입장 번호 ${esc(r.entryCode)}</div></div>`;
     const btn=document.createElement('button');btn.type='button';btn.className='chip';btn.textContent='열기';
-    btn.addEventListener('click',()=>{saveSession(r.roomId);enterRoom(r.roomId);});
+    btn.addEventListener('click',()=>openFromList(r.roomId));
     inner.appendChild(btn);
     card.appendChild(inner);
     el.adminRoomList.appendChild(card);
