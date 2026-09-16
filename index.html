@@ -62,7 +62,8 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .gate{flex:1;display:flex;flex-direction:column;gap:14px;padding:22px 16px 28px;overflow-y:auto}
 .gate-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .gate h1{font-size:27px;font-weight:800;letter-spacing:-.7px;line-height:1.12}
-.gate-sub{font-size:12px;color:var(--text-2);margin-top:6px}
+.gate-sub{font-size:12px;color:var(--text-2);margin-top:6px;text-align:left;padding:2px 0}
+.gate-sub u{text-decoration-color:var(--text-3);text-underline-offset:2px}
 .icon-btn{width:38px;height:38px;border-radius:50%;background:var(--surface);color:var(--text-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--shadow)}
 .icon-btn svg{width:19px;height:19px}
 .pill{border-radius:999px;background:var(--surface);color:var(--text-2);padding:9px 15px;font-size:12px;font-weight:600;flex-shrink:0;box-shadow:var(--shadow)}
@@ -72,7 +73,9 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .room-card{background:var(--surface-2);border-radius:12px;padding:12px 13px;display:flex;justify-content:space-between;gap:10px;align-items:center}
 .room-card-title{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .room-card-meta{font-size:11px;color:var(--text-2);margin-top:3px;font-variant-numeric:tabular-nums}
+.room-card-btns{display:flex;gap:6px;flex-shrink:0;align-items:center}
 .chip{background:var(--accent);color:var(--accent-text);border-radius:999px;padding:7px 15px;font-size:12px;font-weight:600;flex-shrink:0}
+.chip-sub{background:var(--surface-3);color:var(--text-2);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:600;flex-shrink:0}
 .stack{display:flex;flex-direction:column;gap:8px}
 
 /* ===== 앱 ===== */
@@ -168,9 +171,9 @@ button:disabled{cursor:not-allowed;opacity:.35}
   <!-- ============ 게이트 ============ -->
   <section class="gate" id="gate">
     <div class="gate-top">
-      <div>
+      <div style="min-width:0">
         <h1>팀 스케줄러</h1>
-        <div class="gate-sub" id="auth-status">연결 중...</div>
+        <button class="gate-sub" id="profile-btn" type="button">연결 중...</button>
       </div>
       <button class="icon-btn" id="gate-theme-btn" type="button" aria-label="테마 전환"></button>
     </div>
@@ -330,7 +333,6 @@ const MINI_TIMES=Array.from({length:24},(_,i)=>{
   const h=9+Math.floor(i/2),m=i%2===0?'00':'30';
   return`${String(h).padStart(2,'0')}:${m}`;
 });
-/* 시간대 구분: 06~09 dawn / 09~18 day / 18~22 evening / 22~ night */
 function daypartOf(t){
   const h=parseInt(t.slice(0,2),10);
   if(h<9)return'dawn';
@@ -346,6 +348,7 @@ const DEFAULT_WEEKS=['1주차','2주차'];
 const SESSION_KEY='ts:last-room';
 const CREATE_KEY='ts:create-open';
 const THEME_KEY='ts:theme';
+const NAME_KEY='ts:my-name';
 const ADMIN_ROOMS_KEY='ts:admin-rooms';
 const VISITED_KEY='ts:visited-rooms';
 const SAVE_DELAY=350;
@@ -353,7 +356,7 @@ const SAVE_DELAY=350;
 const $=id=>document.getElementById(id);
 const el={
   gate:$('gate'),app:$('app'),
-  authStatus:$('auth-status'),configWarning:$('config-warning'),statusBox:$('status-box'),
+  profileBtn:$('profile-btn'),configWarning:$('config-warning'),statusBox:$('status-box'),
   adminToggle:$('admin-toggle'),adminPanel:$('admin-panel'),gateThemeBtn:$('gate-theme-btn'),
   joinCode:$('join-code'),joinName:$('join-name'),joinBtn:$('join-btn'),
   roomTitle:$('room-title'),ownerName:$('owner-name'),roomPassword:$('room-password'),createRoomBtn:$('create-room-btn'),
@@ -381,8 +384,9 @@ let room=null,people=[],curWeek=0,mode='edit',tab='grid',tool='move';
 let drag=false;
 let createOpen=localStorage.getItem(CREATE_KEY)==='1';
 let themePref=localStorage.getItem(THEME_KEY)||'auto';
+let myName=localStorage.getItem(NAME_KEY)||'';
 let roomUnsub=null,membersUnsub=null,saveTimer=null,firstScroll=false;
-let cachedEntryCode=null;
+let cachedEntryCode=null,authReady=false;
 
 const mq=window.matchMedia('(prefers-color-scheme: dark)');
 mq.addEventListener('change',()=>{if(themePref==='auto')applyTheme();});
@@ -392,11 +396,12 @@ function init(){
   applyTheme();
   bindEvents();
   setCreateUI(createOpen);
+  applyMyName();
   renderGateLists();
   if(!HAS_CFG){
     el.configWarning.classList.remove('hidden');
     el.configWarning.textContent='SCHEDULER_FIREBASE_CONFIG에 Firebase 설정 6개 값을 넣어주세요.';
-    el.authStatus.textContent='Firebase 미설정';
+    el.profileBtn.textContent='Firebase 미설정';
     setControlsEnabled(false);
     return;
   }
@@ -408,10 +413,40 @@ function init(){
     .catch(e=>setStatus(fmtErr(e),true));
   onAuthStateChanged(auth,async u=>{
     user=u;
-    el.authStatus.textContent=user?`준비됨 · ${shortId(user.uid)}`:'로그인 대기 중';
+    authReady=Boolean(u);
+    renderProfileBtn();
     setControlsEnabled(Boolean(user));
     if(user&&getSavedSession())await resumeLastRoom();
   });
+}
+
+/* ---------- 프로필(기본 이름) ---------- */
+function renderProfileBtn(){
+  if(!authReady){el.profileBtn.textContent='로그인 대기 중';return;}
+  el.profileBtn.innerHTML=myName
+    ?`${esc(myName)} 님 · <u>이름 변경</u>`
+    :'<u>내 이름 설정하기</u>';
+}
+function applyMyName(){
+  if(myName){
+    if(!el.joinName.value)el.joinName.value=myName;
+    if(!el.ownerName.value)el.ownerName.value=myName;
+  }
+  renderProfileBtn();
+}
+function setMyName(name){
+  myName=name;
+  if(name)localStorage.setItem(NAME_KEY,name);
+  el.joinName.value=name;
+  el.ownerName.value=name;
+  renderProfileBtn();
+}
+function editMyName(){
+  const v=window.prompt('기본 이름 (방 입장·생성 시 자동 입력돼요)',myName||'');
+  if(v===null)return;
+  const name=norm(v,24);
+  if(!name)return;
+  setMyName(name);
 }
 
 /* ---------- 테마 ---------- */
@@ -423,7 +458,7 @@ function applyTheme(){
   const t=effectiveTheme();
   document.documentElement.setAttribute('data-theme',t);
   el.metaTheme.setAttribute('content',t==='dark'?'#0d1017':'#ffffff');
-  el.gateThemeBtn.innerHTML=t==='dark'?MOON:SUN;
+  el.gateThemeBtn.innerHTML=themePref==='auto'?AUTO:(themePref==='dark'?MOON:SUN);
   if(tab==='settings'&&room)renderSettings();
 }
 function setTheme(pref){
@@ -431,12 +466,15 @@ function setTheme(pref){
   localStorage.setItem(THEME_KEY,pref);
   applyTheme();
 }
+/* 게이트 버튼: 라이트 → 다크 → 시스템 순환 */
 function cycleTheme(){
-  setTheme(effectiveTheme()==='dark'?'light':'dark');
+  const next=themePref==='light'?'dark':(themePref==='dark'?'auto':'light');
+  setTheme(next);
 }
 
 function bindEvents(){
   el.gateThemeBtn.addEventListener('click',cycleTheme);
+  el.profileBtn.addEventListener('click',()=>{if(authReady)editMyName();});
   el.adminToggle.addEventListener('click',()=>setCreateUI(!createOpen));
   el.joinBtn.addEventListener('click',joinRoom);
   el.createRoomBtn.addEventListener('click',createRoom);
@@ -497,7 +535,7 @@ function setControlsEnabled(on){
 async function createRoom(){
   if(!requireFB())return;
   const title=norm(el.roomTitle.value,40)||'새 방';
-  const ownerName=norm(el.ownerName.value,24)||'방장';
+  const ownerName=norm(el.ownerName.value,24)||myName||'방장';
   const pw=el.roomPassword.value.trim();
   if(pw.length<4){setStatus('비밀번호는 4자 이상이어야 해요.',true);return;}
   try{
@@ -512,6 +550,7 @@ async function createRoom(){
     batch.set(doc(db,'roomSecrets',roomRef.id),{roomId:roomRef.id,entryCode:code,codeHash,passwordHash:pwHash,createdBy:user.uid,createdAt:serverTimestamp()});
     batch.set(doc(db,'rooms',roomRef.id,'members',user.uid),{uid:user.uid,name:ownerName,ci:ciForUid(user.uid),schedules:{},joinedAt:serverTimestamp(),updatedAt:serverTimestamp()});
     await batch.commit();
+    setMyName(ownerName);
     rememberAdminRoom({roomId:roomRef.id,title,entryCode:code});
     el.roomPassword.value='';
     setStatus('');
@@ -551,6 +590,7 @@ async function joinRoom(){
       if(mSnap.exists()){tx.update(memberRef,{name,updatedAt:serverTimestamp()});return;}
       tx.set(memberRef,{uid:user.uid,name,ci:ciForUid(user.uid),schedules:{},joinedAt:serverTimestamp(),updatedAt:serverTimestamp()});
     });
+    setMyName(name);
     saveSession(roomId);
     enterRoom(roomId);
     setStatus('');
@@ -569,7 +609,6 @@ async function resumeLastRoom(){
   }catch(e){setStatus(fmtErr(e),true);}
 }
 
-/* 게이트 목록에서 방 열기 — 삭제된 방이면 목록에서 제거 */
 async function openFromList(roomId){
   if(!requireFB())return;
   try{
@@ -629,6 +668,7 @@ function leaveRoom(clear=true){
   closePopup();
   el.app.classList.add('hidden');
   el.gate.classList.remove('hidden');
+  applyMyName();
   renderGateLists();
 }
 
@@ -735,6 +775,7 @@ async function changeMyName(){
   if(!name)return;
   try{
     await updateDoc(doc(db,'rooms',room.id,'members',user.uid),{name,updatedAt:serverTimestamp()});
+    setMyName(name);
   }catch(e){window.alert(fmtErr(e));}
 }
 
@@ -958,7 +999,6 @@ function render(){
       if(editable)cell.dataset.key=key;
 
       if(mode==='edit'){
-        /* 팀원 가능 시간(옅게) */
         slotsCache.forEach(({p,s})=>{
           if(p.id===user?.uid)return;
           if(s.ok.has(key)){
@@ -968,7 +1008,6 @@ function render(){
             cell.appendChild(l);
           }
         });
-        /* 내 입력 */
         if(mine.ok.has(key)){
           const l=document.createElement('div');
           l.style.cssText=`position:absolute;inset:0;background:rgba(${okRGB},.42)`;
@@ -979,7 +1018,6 @@ function render(){
           cell.appendChild(l);
         }
       } else {
-        /* 종합 보기 */
         let okCnt=0,noCnt=0;
         slotsCache.forEach(({s})=>{
           if(s.ok.has(key))okCnt++;
@@ -1070,7 +1108,6 @@ function buildMiniGrid(weekIdx){
 /* ---------- 데이터 ---------- */
 function getMe(){return people.find(p=>p.id===user?.uid)||null;}
 
-/* 3상태: {ok:Set, no:Set}. 옛 배열 형식은 무시 */
 function getSlots(person,weekIdx){
   const w=person?.schedules?.[String(weekIdx)];
   if(!w||Array.isArray(w))return{ok:new Set(),no:new Set()};
@@ -1114,7 +1151,7 @@ async function saveNow(){
 
 /* ---------- 로컬 저장 ---------- */
 function rememberAdminRoom(r){
-  const list=getAdminRooms().filter(x=>x.roomId!==r.roomId);.
+  const list=getAdminRooms().filter(x=>x.roomId!==r.roomId);
   list.unshift(r);
   localStorage.setItem(ADMIN_ROOMS_KEY,JSON.stringify(list.slice(0,20)));
 }
@@ -1132,6 +1169,17 @@ function forgetVisited(id){
   localStorage.setItem(VISITED_KEY,JSON.stringify(getVisited().filter(x=>x.roomId!==id)));
 }
 function getVisited(){try{return JSON.parse(localStorage.getItem(VISITED_KEY)||'[]');}catch{return[];}}
+
+async function copyCode(code,btn){
+  try{
+    await navigator.clipboard.writeText(code);
+    const old=btn.textContent;
+    btn.textContent='복사됨';
+    setTimeout(()=>{btn.textContent=old;},1200);
+  }catch{
+    window.alert(`입장 번호: ${code}`);
+  }
+}
 
 function renderGateLists(){
   const visited=getVisited();
@@ -1157,10 +1205,14 @@ function renderGateLists(){
   mine.forEach(r=>{
     const card=document.createElement('div');card.className='card';card.style.padding='0';
     const inner=document.createElement('div');inner.className='room-card';
-    inner.innerHTML=`<div><div class="room-card-title">${esc(r.title||'방')}</div><div class="room-card-meta">입장 번호 ${esc(r.entryCode)}</div></div>`;
-    const btn=document.createElement('button');btn.type='button';btn.className='chip';btn.textContent='열기';
-    btn.addEventListener('click',()=>openFromList(r.roomId));
-    inner.appendChild(btn);
+    inner.innerHTML=`<div style="min-width:0"><div class="room-card-title">${esc(r.title||'방')}</div><div class="room-card-meta">입장 번호 ${esc(r.entryCode)}</div></div>`;
+    const btns=document.createElement('div');btns.className='room-card-btns';
+    const copyBtn=document.createElement('button');copyBtn.type='button';copyBtn.className='chip-sub';copyBtn.textContent='복사';
+    copyBtn.addEventListener('click',()=>copyCode(r.entryCode,copyBtn));
+    const openBtn=document.createElement('button');openBtn.type='button';openBtn.className='chip';openBtn.textContent='열기';
+    openBtn.addEventListener('click',()=>openFromList(r.roomId));
+    btns.appendChild(copyBtn);btns.appendChild(openBtn);
+    inner.appendChild(btns);
     card.appendChild(inner);
     el.adminRoomList.appendChild(card);
   });
