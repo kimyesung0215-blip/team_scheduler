@@ -13,8 +13,8 @@
   --accent:#2f6df6; --accent-soft:#e6eefe; --accent-text:#ffffff;
   --danger:#e5484d; --danger-soft:#fdeaea;
   --ok:13,148,136; --no:234,115,23;
-  --ok-a:.45; --no-a:.42; --other-a:.11;
-  --heat:13,148,136; --heat-max:.80;
+  --ok-a:.34; --no-a:.32;
+  --heat:13,148,136; --heat-max:.80; --bg-heat-scale:.34;
   --hatch:90,99,114; --hatch-a:.55;
   --grid-line:#eef0f5; --grid-half:#f6f7fa; --grid-hour:#dfe3ec;
   --tl-dawn:#f2f4f9; --tl-day:#fdfaf3; --tl-evening:#f7f3f9; --tl-night:#edeff6;
@@ -29,8 +29,8 @@
   --accent:#4d86ff; --accent-soft:#16233a; --accent-text:#ffffff;
   --danger:#ff6b6b; --danger-soft:#3a1d22;
   --ok:45,212,191; --no:251,146,60;
-  --ok-a:.44; --no-a:.42; --other-a:.20;
-  --heat:45,212,191; --heat-max:.74;
+  --ok-a:.34; --no-a:.32;
+  --heat:45,212,191; --heat-max:.74; --bg-heat-scale:.38;
   --hatch:150,160,178; --hatch-a:.50;
   --grid-line:#1d222d; --grid-half:#191e28; --grid-hour:#2a3141;
   --tl-dawn:#121721; --tl-day:#1b1a15; --tl-evening:#1a1622; --tl-night:#101420;
@@ -62,7 +62,6 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .notice.info{background:var(--surface-2);color:var(--text-2)}
 .hidden{display:none!important}
 
-/* ===== 마이페이지 ===== */
 .me{flex:1;overflow-y:auto;display:flex;flex-direction:column;padding-bottom:28px}
 .banner{height:150px;position:relative;flex-shrink:0}
 .banner-btn{position:absolute;top:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);color:#14171f;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.18)}
@@ -96,7 +95,6 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .me-actions{display:flex;gap:10px;margin-top:2px}
 .me-actions>*{flex:1;text-align:center}
 
-/* ===== 앱 ===== */
 .app{height:100vh;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .topbar{padding:14px 16px 10px;flex-shrink:0}
 .topbar-row{display:flex;align-items:center;gap:9px}
@@ -123,6 +121,7 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--text-2)}
 .legend-ramp{width:22px;height:9px;border-radius:3px;background:linear-gradient(90deg,rgba(var(--heat),.16),rgb(var(--heat)))}
 .legend-hatch{width:14px;height:9px;border-radius:3px;border:1px solid var(--line);background:repeating-linear-gradient(45deg,rgba(var(--hatch),var(--hatch-a)) 0 1.5px,transparent 1.5px 5px)}
+.legend-mine{width:14px;height:9px;border-radius:2px;background:rgba(var(--ok),var(--ok-a));border:1.5px solid rgb(var(--ok))}
 
 .view{flex:1;overflow-y:auto;min-height:0}
 .view-pad{padding:14px 16px 24px;display:flex;flex-direction:column;gap:18px}
@@ -140,6 +139,7 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .cell.daypart,.tl.boundary{border-top:1.5px solid var(--grid-hour)}
 .cell i{position:absolute;inset:0;display:block}
 .cell .hatch{background:repeating-linear-gradient(45deg,rgba(var(--hatch),var(--hatch-a)) 0 1.5px,transparent 1.5px 5px)}
+.cell .mine{z-index:3;border-style:solid;border-width:0;border-color:transparent}
 .grid.drawing .cell{cursor:pointer;touch-action:none}
 .grid.tappable .cell{cursor:pointer}
 .cell.picked{box-shadow:inset 0 0 0 2px var(--accent);z-index:4}
@@ -189,6 +189,10 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .pick.on{border-color:var(--accent);color:var(--accent)}
 .pick-av{width:46px;height:46px;border-radius:50%;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff}
 .pick-banner{width:100%;height:42px;border-radius:10px}
+.color-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:2px 0 6px}
+.color-opt{aspect-ratio:1;border-radius:14px;position:relative;border:2.5px solid transparent;display:flex;align-items:center;justify-content:center}
+.color-opt.on{border-color:var(--text)}
+.color-opt span{width:11px;height:11px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
 
 .week-card{background:var(--surface);border-radius:14px;margin-bottom:9px;overflow:hidden;cursor:pointer;border:1.5px solid transparent;box-shadow:var(--shadow)}
 .week-card.active-card{border-color:var(--accent)}
@@ -292,10 +296,11 @@ button:disabled{cursor:not-allowed;opacity:.35}
       </button>
     </div>
 
-    <div class="legend hidden" id="legend">
-      <div class="legend-item"><span class="legend-ramp"></span>가능 인원</div>
-      <div class="legend-item"><span class="legend-hatch"></span>불가 있음</div>
-      <div class="legend-item" style="margin-left:auto;color:var(--text-3)">칸을 누르면 상세</div>
+    <div class="legend" id="legend">
+      <div class="legend-item"><span class="legend-ramp"></span><span id="legend-ramp-label">가능 인원</span></div>
+      <div class="legend-item" id="legend-hatch-item"><span class="legend-hatch"></span>불가 있음</div>
+      <div class="legend-item hidden" id="legend-mine-item"><span class="legend-mine"></span>내 입력</div>
+      <div class="legend-item" id="legend-hint" style="margin-left:auto;color:var(--text-3)">칸을 누르면 상세</div>
     </div>
 
     <div class="grid-wrap" id="view-grid">
@@ -388,13 +393,20 @@ function daypartOf(t){
   if(h<22)return'evening';
   return'night';
 }
+/* 아바타·팀원 목록용 색 12종. 그리드에서는 쓰지 않으므로 겹쳐도 무해 */
 const COLORS=[
   {solid:'#7c5cd6',light:'#a98ceb'},
+  {solid:'#9b4dca',light:'#c07de4'},
   {solid:'#d6478f',light:'#ee83b6'},
-  {solid:'#4c8f2f',light:'#7ec257'},
-  {solid:'#b5762c',light:'#e0a558'},
-  {solid:'#3f5bb5',light:'#7b91dd'},
+  {solid:'#c2415f',light:'#e07d92'},
   {solid:'#b04a3c',light:'#dd8477'},
+  {solid:'#b5762c',light:'#e0a558'},
+  {solid:'#8a8f2c',light:'#bcc25c'},
+  {solid:'#4c8f2f',light:'#7ec257'},
+  {solid:'#2f8f5f',light:'#5fc28c'},
+  {solid:'#3f7fb5',light:'#7db2dd'},
+  {solid:'#3f5bb5',light:'#7b91dd'},
+  {solid:'#5f5f7a',light:'#9494ad'},
 ];
 const PATTERNS=[
   {id:0,label:'기본'},
@@ -402,6 +414,7 @@ const PATTERNS=[
   {id:2,label:'동심원'},
   {id:3,label:'격자'},
 ];
+const BANNERS=['내 색','파랑','회색','그라데이션','청록 혼합','도트'];
 const DEFAULT_WEEKS=['1주차','2주차'];
 const SESSION_KEY='ts:last-room';
 const THEME_KEY='ts:theme';
@@ -427,7 +440,8 @@ const el={
   prevWeek:$('prev-week'),nextWeek:$('next-week'),
   seg:$('seg'),mtEdit:$('mt-edit'),mtOverview:$('mt-overview'),
   toolbar:$('toolbar'),toolMove:$('tool-move'),toolOk:$('tool-ok'),toolNo:$('tool-no'),toolErase:$('tool-erase'),
-  legend:$('legend'),
+  legend:$('legend'),legendRampLabel:$('legend-ramp-label'),legendHatchItem:$('legend-hatch-item'),
+  legendMineItem:$('legend-mine-item'),legendHint:$('legend-hint'),
   grid:$('g'),viewGrid:$('view-grid'),viewPeople:$('view-people'),viewSettings:$('view-settings'),
   personList:$('plist'),peopleCountLabel:$('people-count-label'),settingsBody:$('settings-body'),
   btGrid:$('bt-grid'),btPeople:$('bt-people'),btSettings:$('bt-settings'),
@@ -482,7 +496,7 @@ function init(){
 
 /* ---------- 프로필 ---------- */
 function blankProfile(){
-  return{name:'',bio:'',tags:[],pattern:0,banner:0};
+  return{name:'',bio:'',tags:[],pattern:0,banner:0,color:null};
 }
 function loadProfileCache(){
   try{
@@ -507,7 +521,7 @@ async function loadMyProfile(){
 }
 async function saveProfile(){
   saveProfileCache();
-  profileCache[user?.uid]=profile;
+  if(user)profileCache[user.uid]=profile;
   if(!db||!user)return;
   try{
     await setDoc(doc(db,'profiles',user.uid),{
@@ -516,6 +530,7 @@ async function saveProfile(){
       tags:Array.isArray(profile.tags)?profile.tags.slice(0,MAX_TAGS):[],
       pattern:profile.pattern|0,
       banner:profile.banner|0,
+      color:profile.color===null?null:(profile.color|0),
       updatedAt:serverTimestamp(),
     },{merge:true});
   }catch(e){setStatus(fmtErr(e),true);}
@@ -530,18 +545,25 @@ async function fetchProfiles(uids){
     }catch{profileCache[u]=blankProfile();}
   }));
 }
-function myColorIndex(){return user?ciForUid(user.uid):0;}
+/* 프로필 선택색이 정본, 없으면 UID 해시로 자동 */
+function colorOf(uid,fallbackCi){
+  const p=profileCache[uid];
+  if(p&&p.color!==null&&p.color!==undefined)return p.color%COLORS.length;
+  if(typeof fallbackCi==='number')return fallbackCi%COLORS.length;
+  return uid?ciForUid(uid):0;
+}
+function myColorIndex(){
+  if(profile.color!==null&&profile.color!==undefined)return profile.color%COLORS.length;
+  return user?ciForUid(user.uid):0;
+}
 
-/* ---------- 아바타/배너 렌더 ---------- */
+/* ---------- 아바타/배너 ---------- */
 function paintAvatar(node,{ci,pattern,initial,size}){
   const c=COLORS[(ci||0)%COLORS.length];
   node.innerHTML='';
   node.style.background=c.solid;
   const p=(pattern|0)%4;
-  if(p===0){
-    node.textContent=initial||'?';
-    return;
-  }
+  if(p===0){node.textContent=initial||'?';return;}
   const ov=document.createElement('i');
   ov.style.cssText='position:absolute;inset:0;display:block';
   if(p===1){
@@ -569,7 +591,7 @@ function bannerStyle(idx,ci){
     case 2:return neutral;
     case 3:return `linear-gradient(135deg,${c.solid},${c.light})`;
     case 4:return `linear-gradient(135deg,rgb(${ok}),${accent})`;
-    default:return `radial-gradient(circle at 50% 50%,rgba(255,255,255,.22) 0 2px,transparent 2px 9px) , ${c.solid}`;
+    default:return `radial-gradient(circle at 50% 50%,rgba(255,255,255,.22) 0 2px,transparent 2px 9px), ${c.solid}`;
   }
 }
 
@@ -688,7 +710,6 @@ function renderMe(){
 
 function renderRoomList(){
   const mine=getAdminRooms();
-  const mineMap=new Map(mine.map(x=>[x.roomId,x]));
   const visited=getVisited();
   const seen=new Set();
   const list=[];
@@ -700,8 +721,7 @@ function renderRoomList(){
     const e=document.createElement('div');e.className='empty';
     e.textContent='아직 방이 없어요.\n방을 만들거나 번호로 입장해보세요.';
     e.style.whiteSpace='pre-line';
-    el.roomList.appendChild(e);
-    return;
+    el.roomList.appendChild(e);return;
   }
   list.forEach((r,i)=>{
     const item=document.createElement('div');item.className='rowitem';
@@ -757,15 +777,38 @@ function openProfileEdit(){
   bioIn.placeholder='예: 기계공학과 · 평일 저녁은 비어요';bioIn.value=profile.bio||'';
   bioBox.appendChild(bioIn);
 
-  wrap.appendChild(nameBox);wrap.appendChild(bioBox);
+  const colorBox=document.createElement('div');
+  colorBox.innerHTML='<div class="sec-label">내 색</div>';
+  const cg=document.createElement('div');cg.className='color-grid';
+  let pickedColor=myColorIndex();
+  COLORS.forEach((c,i)=>{
+    const b=document.createElement('button');b.type='button';
+    b.className=`color-opt${pickedColor===i?' on':''}`;
+    b.style.background=c.solid;
+    b.setAttribute('aria-label',`색 ${i+1}`);
+    b.innerHTML=pickedColor===i?'<span></span>':'';
+    b.addEventListener('click',()=>{
+      pickedColor=i;
+      [...cg.children].forEach((x,j)=>{
+        x.className=`color-opt${j===i?' on':''}`;
+        x.innerHTML=j===i?'<span></span>':'';
+      });
+    });
+    cg.appendChild(b);
+  });
+  colorBox.appendChild(cg);
+
+  wrap.appendChild(nameBox);wrap.appendChild(bioBox);wrap.appendChild(colorBox);
   el.sheetBody.appendChild(wrap);
 
   const save=document.createElement('button');save.type='button';save.className='btn';save.textContent='저장';
   save.addEventListener('click',async()=>{
     profile.name=norm(nameIn.value,24);
     profile.bio=norm(bioIn.value,60);
+    profile.color=pickedColor;
     await saveProfile();
     renderMe();
+    if(room)renderPeople();
     closeSheet();
   });
   el.sheetFoot.appendChild(save);
@@ -774,11 +817,6 @@ function openProfileEdit(){
 function openAvatarPicker(){
   openSheet('아바타 무늬');
   const ci=myColorIndex();
-  const note=document.createElement('div');note.className='notice info';
-  note.textContent='색은 팀 안에서 서로 구분되도록 자동 배정돼요. 무늬만 고를 수 있어요.';
-  note.style.marginBottom='12px';
-  el.sheetBody.appendChild(note);
-
   const grid=document.createElement('div');grid.className='pick-grid';
   PATTERNS.forEach(p=>{
     const b=document.createElement('button');b.type='button';
@@ -795,6 +833,10 @@ function openAvatarPicker(){
     grid.appendChild(b);
   });
   el.sheetBody.appendChild(grid);
+  const note=document.createElement('div');note.className='notice info';
+  note.textContent='색은 프로필 편집에서 바꿀 수 있어요.';
+  note.style.marginTop='10px';
+  el.sheetBody.appendChild(note);
 }
 
 function openBannerPicker(){
@@ -802,7 +844,7 @@ function openBannerPicker(){
   const ci=myColorIndex();
   const grid=document.createElement('div');grid.className='pick-grid';
   grid.style.gridTemplateColumns='repeat(3,1fr)';
-  ['내 색','파랑','회색','그라데이션','청록 혼합','도트'].forEach((label,i)=>{
+  BANNERS.forEach((label,i)=>{
     const b=document.createElement('button');b.type='button';
     b.className=`pick${profile.banner===i?' on':''}`;
     const bn=document.createElement('div');bn.className='pick-banner';
@@ -832,7 +874,6 @@ function openJoinSheet(){
   name.placeholder='내 이름';name.value=profile.name||'';
   form.appendChild(code);form.appendChild(name);
   el.sheetBody.appendChild(form);
-
   const go=document.createElement('button');go.type='button';go.className='btn';go.textContent='입장';
   go.addEventListener('click',()=>joinRoom(code.value.trim(),norm(name.value,24),go));
   el.sheetFoot.appendChild(go);
@@ -850,7 +891,6 @@ function openCreateSheet(){
   const pw=document.createElement('input');pw.className='input';pw.type='password';pw.placeholder='관리 비밀번호 (4자 이상)';
   form.appendChild(title);form.appendChild(owner);form.appendChild(pw);
   el.sheetBody.appendChild(form);
-
   const go=document.createElement('button');go.type='button';go.className='btn';go.textContent='방 생성';
   go.addEventListener('click',()=>createRoom(norm(title.value,40),norm(owner.value,24),pw.value.trim(),go));
   el.sheetFoot.appendChild(go);
@@ -896,7 +936,7 @@ async function createRoom(title,ownerName,pw,btn){
     batch.set(roomRef,{title,createdBy:user.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp(),weekLabels:DEFAULT_WEEKS});
     batch.set(doc(db,'roomCodes',codeHash),{roomId:roomRef.id,createdBy:user.uid,createdAt:serverTimestamp()});
     batch.set(doc(db,'roomSecrets',roomRef.id),{roomId:roomRef.id,entryCode:code,codeHash,passwordHash:pwHash,createdBy:user.uid,createdAt:serverTimestamp()});
-    batch.set(doc(db,'rooms',roomRef.id,'members',user.uid),{uid:user.uid,name:ownerName,ci:ciForUid(user.uid),schedules:{},joinedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+    batch.set(doc(db,'rooms',roomRef.id,'members',user.uid),{uid:user.uid,name:ownerName,ci:myColorIndex(),schedules:{},joinedAt:serverTimestamp(),updatedAt:serverTimestamp()});
     await batch.commit();
     if(!profile.name){profile.name=ownerName;await saveProfile();}
     rememberAdminRoom({roomId:roomRef.id,title,entryCode:code});
@@ -926,14 +966,15 @@ async function joinRoom(code,name,btn){
     const codeSnap=await getDoc(doc(db,'roomCodes',await sha256(code)));
     if(!codeSnap.exists()){window.alert('입장 번호가 맞지 않아요.');return;}
     const roomId=codeSnap.data().roomId;
+    const ci=myColorIndex();
     await runTransaction(db,async tx=>{
       const roomRef=doc(db,'rooms',roomId);
       const memberRef=doc(db,'rooms',roomId,'members',user.uid);
       const rSnap=await tx.get(roomRef);
       if(!rSnap.exists())throw new Error('방이 존재하지 않아요.');
       const mSnap=await tx.get(memberRef);
-      if(mSnap.exists()){tx.update(memberRef,{name,updatedAt:serverTimestamp()});return;}
-      tx.set(memberRef,{uid:user.uid,name,ci:ciForUid(user.uid),schedules:{},joinedAt:serverTimestamp(),updatedAt:serverTimestamp()});
+      if(mSnap.exists()){tx.update(memberRef,{name,ci,updatedAt:serverTimestamp()});return;}
+      tx.set(memberRef,{uid:user.uid,name,ci,schedules:{},joinedAt:serverTimestamp(),updatedAt:serverTimestamp()});
     });
     if(!profile.name){profile.name=name;await saveProfile();}
     closeSheet();
@@ -1027,6 +1068,18 @@ function closeWatchers(){
 function isOwner(){return Boolean(room&&user&&room.createdBy===user.uid);}
 
 /* ---------- 탭/모드/도구 ---------- */
+function syncBars(){
+  const onGrid=tab==='grid';
+  el.seg.classList.toggle('hidden',!onGrid);
+  el.weekPick.classList.toggle('hidden',!onGrid);
+  el.toolbar.classList.toggle('hidden',!onGrid||mode!=='edit');
+  el.legend.classList.toggle('hidden',!onGrid);
+  const edit=mode==='edit';
+  el.legendRampLabel.textContent=edit?'팀원 가능 인원':'가능 인원';
+  el.legendHatchItem.classList.toggle('hidden',edit);
+  el.legendMineItem.classList.toggle('hidden',!edit);
+  el.legendHint.textContent=edit?'':'칸을 누르면 상세';
+}
 function selectTab(t){
   tab=t;
   el.btGrid.className=`tab${t==='grid'?' on':''}`;
@@ -1035,10 +1088,7 @@ function selectTab(t){
   el.viewGrid.classList.toggle('hidden',t!=='grid');
   el.viewPeople.classList.toggle('hidden',t!=='people');
   el.viewSettings.classList.toggle('hidden',t!=='settings');
-  el.seg.classList.toggle('hidden',t!=='grid');
-  el.weekPick.classList.toggle('hidden',t!=='grid');
-  el.toolbar.classList.toggle('hidden',t!=='grid'||mode!=='edit');
-  el.legend.classList.toggle('hidden',t!=='grid'||mode!=='overview');
+  syncBars();
   if(t!=='grid')closeCellInfo();
   if(t==='people'){
     renderPeople();
@@ -1046,18 +1096,15 @@ function selectTab(t){
   }
   if(t==='settings')renderSettings();
 }
-
 function setMode(m){
   mode=m;
   el.mtEdit.className=`seg-btn${m==='edit'?' on':''}`;
   el.mtOverview.className=`seg-btn${m==='overview'?' on':''}`;
-  el.toolbar.classList.toggle('hidden',m!=='edit'||tab!=='grid');
-  el.legend.classList.toggle('hidden',m!=='overview'||tab!=='grid');
   if(m!=='edit')setTool('move');
+  syncBars();
   closeCellInfo();
   render();
 }
-
 function setTool(t){
   tool=t;
   el.toolMove.className=`tool t-neutral${t==='move'?' on':''}`;
@@ -1066,7 +1113,6 @@ function setTool(t){
   el.toolErase.className=`tool${t==='erase'?' on':''}`;
   el.grid.classList.toggle('drawing',t!=='move'&&mode==='edit');
 }
-
 function gotoWeek(i){
   if(!room||i<0||i>=room.weekLabels.length)return;
   curWeek=i;closeCellInfo();render();
@@ -1119,8 +1165,7 @@ async function addWeek(){
   const labels=[...room.weekLabels,`${room.weekLabels.length+1}주차`];
   try{
     await updateDoc(doc(db,'rooms',room.id),{weekLabels:labels,updatedAt:serverTimestamp()});
-    curWeek=labels.length-1;
-    renderWeekSheet();
+    curWeek=labels.length-1;renderWeekSheet();
   }catch(e){window.alert(fmtErr(e));}
 }
 async function deleteWeek(i,e){
@@ -1160,7 +1205,6 @@ async function renameWeek(i,e){
     renderWeekSheet();
   }catch(err){window.alert(fmtErr(err));}
 }
-
 function openWeekSheet(){openSheet('주차 관리');renderWeekSheet();}
 function renderWeekSheet(){
   if(!room)return;
@@ -1364,7 +1408,7 @@ function renderPeople(){
     });
     const r=document.createElement('div');r.className='row';
     const av=document.createElement('div');av.className='avatar';
-    paintAvatar(av,{ci:p.ci||0,pattern:prof.pattern,initial:(p.name||'?').slice(0,1),size:34});
+    paintAvatar(av,{ci:colorOf(p.id,p.ci),pattern:prof.pattern,initial:(p.name||'?').slice(0,1),size:34});
     const main=document.createElement('div');main.className='row-main';
     const bits=[`가능 시간 ${(okCount/2).toFixed(1)}시간`];
     if(prof.bio)bits.unshift(prof.bio);
@@ -1393,15 +1437,14 @@ function renderPeople(){
 function render(){
   if(!room)return;
   const me=getMe();
-  const total=Math.max(people.length,1);
   const css=getComputedStyle(document.documentElement);
   const heat=css.getPropertyValue('--heat').trim();
   const heatMax=parseFloat(css.getPropertyValue('--heat-max'))||.8;
+  const bgScale=parseFloat(css.getPropertyValue('--bg-heat-scale'))||.34;
   const okRGB=css.getPropertyValue('--ok').trim();
   const noRGB=css.getPropertyValue('--no').trim();
-  const okA=css.getPropertyValue('--ok-a').trim()||'.45';
-  const noA=css.getPropertyValue('--no-a').trim()||'.42';
-  const otherA=css.getPropertyValue('--other-a').trim()||'.11';
+  const okA=css.getPropertyValue('--ok-a').trim()||'.34';
+  const noA=css.getPropertyValue('--no-a').trim()||'.32';
 
   el.roomTitleLabel.textContent=room.title;
   el.weekLabelText.textContent=room.weekLabels[curWeek]||'1주차';
@@ -1416,6 +1459,14 @@ function render(){
   const mine=me?getSlots(me,curWeek):{ok:new Set(),no:new Set()};
   const editable=mode==='edit'&&Boolean(me);
   const slotsCache=people.map(p=>({p,s:getSlots(p,curWeek)}));
+  /* 편집 화면 배경은 "나를 뺀 팀원" 밀도 */
+  const others=slotsCache.filter(({p})=>p.id!==user?.uid);
+  const othersTotal=Math.max(others.length,1);
+  const allTotal=Math.max(people.length,1);
+
+  /* 인접 판정용 헬퍼 */
+  const keyAt=(di,ti)=>(di<0||di>6||ti<0||ti>=TIMES.length)?null:`${DKEYS[di]}-${TIMES[ti]}`;
+  const inSet=(set,di,ti)=>{const k=keyAt(di,ti);return k?set.has(k):false;};
 
   let prevPart=null;
   TIMES.forEach((t,ti)=>{
@@ -1428,29 +1479,37 @@ function render(){
     tl.textContent=ti%2===0?t:'';
     el.grid.appendChild(tl);
 
-    DKEYS.forEach(dk=>{
+    DKEYS.forEach((dk,di)=>{
       const key=`${dk}-${t}`;
       const cell=document.createElement('div');
       cell.className=`cell${ti%2?' half':''}${isBoundary?' daypart':''}${key===pickedKey?' picked':''}`;
       if(editable||mode==='overview')cell.dataset.key=key;
 
       if(mode==='edit'){
-        slotsCache.forEach(({p,s})=>{
-          if(p.id===user?.uid)return;
-          if(s.ok.has(key)){
-            const c=COLORS[(p.ci||0)%COLORS.length];
-            const l=document.createElement('i');
-            l.style.cssText=`background:${c.solid};opacity:${otherA}`;
-            cell.appendChild(l);
-          }
-        });
-        if(mine.ok.has(key)){
+        /* 배경: 팀원 가능 밀도 (옅은 히트맵) */
+        let othersCnt=0;
+        others.forEach(({s})=>{if(s.ok.has(key))othersCnt++;});
+        if(othersCnt>0){
+          const a=((heatMax/othersTotal)*othersCnt*bgScale).toFixed(3);
           const l=document.createElement('i');
-          l.style.cssText=`background:rgba(${okRGB},${okA})`;
+          l.style.cssText=`background:rgba(${heat},${a})`;
           cell.appendChild(l);
-        } else if(mine.no.has(key)){
+        }
+        /* 내 입력: 덩어리 윤곽선만 */
+        const isOk=mine.ok.has(key),isNo=mine.no.has(key);
+        if(isOk||isNo){
+          const set=isOk?mine.ok:mine.no;
+          const rgb=isOk?okRGB:noRGB;
+          const alpha=isOk?okA:noA;
           const l=document.createElement('i');
-          l.style.cssText=`background:rgba(${noRGB},${noA})`;
+          l.className='mine';
+          l.style.background=`rgba(${rgb},${alpha})`;
+          const bw='1.5px';
+          if(!inSet(set,di,ti-1))l.style.borderTopWidth=bw;
+          if(!inSet(set,di,ti+1))l.style.borderBottomWidth=bw;
+          if(!inSet(set,di-1,ti))l.style.borderLeftWidth=bw;
+          if(!inSet(set,di+1,ti))l.style.borderRightWidth=bw;
+          l.style.borderColor=`rgb(${rgb})`;
           cell.appendChild(l);
         }
       } else {
@@ -1460,7 +1519,7 @@ function render(){
           if(s.no.has(key))noCnt++;
         });
         if(okCnt>0){
-          const a=((heatMax/total)*okCnt).toFixed(2);
+          const a=((heatMax/allTotal)*okCnt).toFixed(2);
           const l=document.createElement('i');
           l.style.cssText=`background:rgba(${heat},${a})`;
           cell.appendChild(l);
@@ -1472,7 +1531,7 @@ function render(){
         if(okCnt>=2){
           const b=document.createElement('span');b.className='badge';
           b.textContent=okCnt;
-          b.style.color=okCnt/total>0.55?'#fff':`rgb(${heat})`;
+          b.style.color=okCnt/allTotal>0.55?'#fff':`rgb(${heat})`;
           cell.appendChild(b);
         }
       }
