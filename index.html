@@ -141,6 +141,7 @@ button:disabled{cursor:not-allowed;opacity:.35}
 .legend-hatch{width:14px;height:9px;border-radius:3px;border:1px solid var(--line);background:repeating-linear-gradient(45deg,rgba(var(--hatch),var(--hatch-a)) 0 1.5px,transparent 1.5px 5px)}
 .legend-dec{width:14px;height:9px;border-radius:3px;border:2px solid rgb(var(--decided))}
 .legend-mine{width:14px;height:9px;border-radius:2px;background:rgba(var(--ok),var(--ok-a));border:1.5px solid rgb(var(--ok))}
+.legend-mine.no{background:rgba(var(--no),var(--no-a));border-color:rgb(var(--no))}
 
 .view{flex:1;overflow-y:auto;min-height:0}
 .view-pad{padding:14px 16px 24px;display:flex;flex-direction:column;gap:18px}
@@ -1222,8 +1223,8 @@ function renderLegend(){
       el.legend.appendChild(d);
     }
   } else {
-    add('<span class="legend-ramp"></span>팀원 가능');
-    add('<span class="legend-mine"></span>내 입력');
+    add('<span class="legend-mine"></span>내 가능');
+    add('<span class="legend-mine no"></span>내 불가');
     add('<span class="legend-dec"></span>확정');
     if(view==='calendar'&&isOwner()&&tool==='move'){
       const d=document.createElement('div');d.className='legend-item';
@@ -1362,8 +1363,6 @@ function renderGrid(){
   const mine=me?getSlots(me,curWeek):{ok:new Set(),no:new Set()};
   const dec=getDecided(curWeek);
   const cache=people.map(p=>({p,s:getSlots(p,curWeek)}));
-  const others=cache.filter(({p})=>p.id!==user?.uid);
-  const othersTotal=Math.max(others.length,1);
   const allTotal=Math.max(people.length,1);
   const editable=(mode==='edit'&&Boolean(me))||(mode==='overview');
 
@@ -1387,11 +1386,6 @@ function renderGrid(){
       if(editable)cell.dataset.key=key;
 
       if(mode==='edit'){
-        let oc=0;others.forEach(({s})=>{if(s.ok.has(key))oc++;});
-        if(oc>0){
-          const a=((v.heatMax/othersTotal)*oc*v.bgScale).toFixed(3);
-          const l=document.createElement('i');l.style.cssText=`background:rgba(${v.heat},${a})`;cell.appendChild(l);
-        }
         const isOk=mine.ok.has(key),isNo=mine.no.has(key);
         if(isOk||isNo){
           const set=isOk?mine.ok:mine.no;
@@ -1462,8 +1456,6 @@ function renderCalendar(){
   }
   const mine=me?getDates(me):{ok:new Set(),no:new Set()};
   const cache=people.map(p=>({p,d:getDates(p)}));
-  const others=cache.filter(({p})=>p.id!==user?.uid);
-  const othersTotal=Math.max(others.length,1);
   const allTotal=Math.max(people.length,1);
   const decSet=new Set(room.decidedDates||[]);
   const editable=(mode==='edit'&&Boolean(me))||(mode==='overview');
@@ -1480,11 +1472,6 @@ function renderCalendar(){
     if(editable||isOwner())cell.dataset.key=key;
 
     if(mode==='edit'){
-      let oc=0;others.forEach(({d:dd})=>{if(dd.ok.has(key))oc++;});
-      if(oc>0){
-        const a=((v.heatMax/othersTotal)*oc*v.bgScale).toFixed(3);
-        const l=document.createElement('i');l.style.cssText=`background:rgba(${v.heat},${a})`;cell.appendChild(l);
-      }
       if(mine.ok.has(key)){
         const l=document.createElement('i');
         l.style.cssText=`background:rgba(${v.ok},${v.okA});border:1.5px solid rgb(${v.ok})`;cell.appendChild(l);
